@@ -1,0 +1,78 @@
+---
+title: "Assignment 2"
+author: "Akihiro Shiroshita"
+date: "2022-10-20"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+Assignment 2 
+Epidemiology Methods and Theory I
+Fall 2022
+Due Friday, November 4, 2022 via BRIGHTSPACE @5:00 pm
+
+In assignment 1 you reviewed literature on various studies, risk factors, and potential confounders related to your specific exposure-outcome association. Assignment 2 will build on that work to conduct preliminary analyses and practice scientific writing pertaining to your specific research question. You will use data from your research group to perform data exploration relevant to your research question and to begin summarizing the strengths and limitations of your study. 
+
+Excluding tables and references, the main text should not be more than 5 pages double spaced. Please number all sections. You are also required to turn in the log file from your analysis. 
+
+Requirements of the dataset:
+-	Dichotomous or categorical exposure variable. If the exposure of interest is continuous, you may dichotomize it or categorize it into groups. 
+-	Dichotomous outcome variable. If your outcome of interest is continuous, or categorical dichotomize it. 
+-	Identify 5-10 covariates (based on literature review and subject matter knowledge). If you have a small dataset with fewer than 5 covariates, use all the appropriate covariates you have. At least 2 covariates should be continuous. 
+-	Please notify your instructors as early as possible if you have any concerns about your dataset
+
+For assignment 2, please do the following:
+
+1.	Restate your research question in the form of a testable hypothesis (e.g., does smoking increase the risk of heart failure?)
+
+2.	In one or two paragraphs, state the study design for this specific project (this may be different from the design for the parent study).  Be sure to describe the study population in terms of inclusion and exclusion criteria. Additionally, include any information about how participants were sampled/recruited, if applicable.
+
+3.	In one paragraph, describe the exposure assessment and how it will be analyzed.  For the purposes of this assignment, you should use either a dichotomous or categorical exposure variable.  If your original exposure variable was continuous and you categorized it, what cut-points did you use to categorize your variables and why did you choose those cut points? 
+
+4.	In one paragraph, describe the outcome assessment and how it will be analyzed.  For the purposes of this assignment, you should use a dichotomous outcome variable.  If the outcome is continuous or categorical, state how you decided to dichotomize it into the groups you chose. 
+
+5.	Based on your literature review and any other substantive knowledge you have of the subject, list the potential confounders and effect modifiers you think should be included in the analysis of your exposure and outcome.  Indicate whether all these confounders and modifiers are available in your dataset. 
+
+6.	Label all the variables in your dataset.
+
+7.	For all categorical or dichotomous variables, add value labels for all groups.
+
+8.	Is there missing data in your dataset? If so, explain how missing values are coded and how they will be handled in the analysis. Summarize interesting missing data patterns. 
+
+9.	Table 0. Create a list of all the variables in your dataset, including exposure, outcome, covariates, confounders and effect modifiers. Include the following:
+a.	Variable name
+b.	Variable label
+c.	Variable type (continuous, categorical, dichotomous)
+d.	Range for continuous variables OR unique values and value labels for categorical and dichotomous variables
+e.	Percent missing
+
+10.	Create histograms for all continuous variables. Comment on outliers, skewed distributions (and whether/what transformation may be necessary)
+
+11.	Table 1. Create a table with categories of your main exposure variable as the columns. If your study design is cohort or cross-sectional include all participants in your study, otherwise use only controls if your study is a case-control study. Compute descriptive statistics (frequencies and proportion for categorical variables and mean ± SD for continuous variables) for all potential confounders by categories of your main exposure. 
+
+12.	Table 2. Calculate the crude measure of association (including 95% confidence intervals) between your exposure and outcome. Interpret this association. How did you arrive at your chosen reference group?
+
+13.	Table 3. Identify one variable that could be an effect modifier of the association between your exposure and outcome. Present stratum measures of association (including 95% confidence intervals), stratified by the potential effect measure modifier. Include frequencies. Calculate the Breslow Day test of homogeneity (Table 3a). In addition, present the findings using a single referent group using the doubly unexposed as the referent group (Table 3b). Interpret the measures of association and comment on the potential for effect modification.
+
+14.	Table 4. For at least 5 of your confounders, identify whether the confounder is associated with outcome among the unexposed. Hint: create a table with crude OR (and 95% CI) for the association between that confounder and your outcome among the unexposed (include frequencies or means as necessary – similar to table above)  
+
+15.	Table 5. For at least 5 of your confounders, identify whether the confounder is associated with the exposure among the general population. Hint: create a table of the crude OR (and 95% CI) for the association between that confounder and your exposure among the total population (for cohort or cross-sectional studies) or among the controls (for case-control studies). 
+
+16.	Table 6. Depending on the results of questions #14 and #15, decide which confounders you should adjust for in the multivariable analysis (Hint: confounders should be associated with the outcome among the unexposed and associated with the exposure among the general population). Present your results in a table and interpret the measure of association. 
+
+17.	Table 7. Using directed acyclic graphs that you constructed as a part of your exercises, construct a final DAG for your project. Using this DAG, determine the set of confounders that you would include in your multivariable model. For effect measure modification, feel free to rely on your empiric assessment. Present these results in a table and interpret the measure of association. Are the variables you chose for confounding in your multivariable model based on DAG different than empiric methods you used in the questions above? Are the effect estimates between your exposure outcome relationship different if you based your variable selection based on DAGs vs. empiric method? 
+
+18.	In one or two paragraphs, briefly discuss whether your dataset provides adequate information to answer your research question.  Show evidence in terms of a) number of participants with analyzable data for the exposure, outcome, and confounders, b) quality of exposure and outcome assessment, and c) how your measurements conform to the generally agreed upon standards for your exposure or outcome
+
+19.	In one or two paragraphs, discuss whether or not your study design is adequate for testing your hypothesis. If not what are the limitations (Consider the following factors: study design, sample size, sampling methods, statistical analysis methods, data collection techniques, selection of reference population and any control populations, if appropriate)? What could be done better in a future study? (Note: please suggest something other than a randomized clinical trial).
+
+20.	In one or two paragraphs, discuss the specific strengths in you study (Consider the following factors: uniqueness of your database, study design, sample size, sampling methods, statistical methods, data collection techniques, selection of reference population and any control populations, if appropriate)?
+
+21.	Make a final determination on whether or not you think your study is feasible. Explain your answer and suggest if there is a need to modify your research question or obtain an alternative dataset.

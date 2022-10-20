@@ -1,0 +1,58 @@
+---
+title: "Analysis results"
+author: "Akihiro Shiroshita"
+date: "2022-10-20"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+
+packages = c("devtools",
+             "usethis",
+             "readr",
+             "readxl",
+             "tidyverse",
+             "tidylog",
+             "lubridate",
+             "ggplot2",
+             "ggplotgui",
+             "ggthemes",
+             "arsenal")
+package.check <- lapply(packages, FUN = function(x){
+  if (!require(x, character.only = TRUE)){
+    install.packages(x, dependencies = TRUE)
+    library(x, character.only = TRUE)
+  }
+})
+```
+
+# Patient chatacteristics  
+
+```{r}
+df <- read_csv()
+```
+
+# Imputation  
+
+This time we imputed the 
+```{r}
+
+```
+
+# Main analysis  
+
+```{r}
+
+```
+
+# Sensitivity analysis  
+
+```{r}
+
+```
+
