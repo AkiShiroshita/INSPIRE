@@ -147,8 +147,8 @@ Based on previous literature, we selected confouders. [@shi2020;
 
 **Effect modifier**
 
-Viral co-infection and genetic influences are expected as effect
-modifiers [@binns2022].
+Viral co-infection and genetic influences such as family history of
+asthma and infant sex are expected as effect modifiers [@binns2022].
 
 **Covariates**
 
@@ -167,7 +167,8 @@ care attendance in the first year of life.
 Regarding confounders, our cohort study included all necessary
 information. Regarding effect modification, our cohort study collected
 the information, but in this assignment, we cannot access them. Instead,
-we evaluated the effect modification of family history of asthma.
+for this phase of analysis, we evaluated the effect modification of
+family history of asthma and infant sex.
 
 6.  Label all the variables in your dataset.
 7.  For all categorical or dichotomous variables, add value labels for
@@ -232,7 +233,6 @@ df <- df %>%
          fyrecwhz2p_dev  = factor(fyrecwhz2p_dev , levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the fourth year")),
          vyrecwhz2p_dev = factor(vyrecwhz2p_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the fifth year")),
          xyrecwhz2p_dev = factor(xyrecwhz2p_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the sixth year")),
-         fycurrentasthma_dev = factor(fycurrentasthma_dev, levels = c(0,1), labels = c("Not", "Five-year current asthma")),
          oy_rec_whz_dev = factor(oy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the first year")),
          ty_rec_whz_dev = factor(ty_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the second year")),
          ry_rec_whz_dev = factor(ry_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the third year")),
@@ -420,9 +420,13 @@ asthma inception decreased by a factor of
     Interpret the measures of association and comment on the potential
     for effect modification.
 
+-   Family history of asthma
+
 ```{r}
 df <- df %>% 
   mutate(any_family_asthma = if_else(MAT_ASTHMA_EVER == "Maternal asthma" | PAT_ASTHMA_EVER == "Paternal asthma", 1, 0))
+
+df %>% filter(any_family_asthma == 1) %>% count()
 
 dmm_tab_data <- tibble(
   RSV_infection_first_life = rep(c("YES", "YES", "NO", "NO"), 2),
@@ -472,17 +476,70 @@ fit_bdt <- glm(vycurrentasthma_dev ~ oy_rsv_infected_dev+any_family_asthma,
 BreslowDayTest(tab, OR = exp(summary(fit_bdt)[["coefficients"]][1,1]))
 ```
 
-We selected family history of asthma because it is a proxy of genetic
-influence which was expected as an effect modifier. Our logistic
-regression model could not find any effect modifications based on both
-additive and multiplicative interaction. On the other hand, we performed
-the Breslow Day test of homogeneity using the odds ratio adjusted for
-family history of asthma, and it found a significant result. It means
-there might be a effect modification either additive or multiplicative
-scale. In total, we determined a family history of asthma may not be an
-effect modifier because based on the two-by-two contingency table, there
-may not be a large difference of child asthma inception between children
-with family history of asthma and those without it.
+-   Infant sex  
+
+```{r}
+df %>% filter(sex == "Male") %>% count()
+
+dmm_tab_data2 <- tibble(
+  RSV_infection_first_life = rep(c("YES", "YES", "NO", "NO"), 2),
+  child_asthma_development = rep(c("YES", "NO"), 4),
+  sex = c(rep("Male", 4), rep("Female", 4)),
+  count = c(count(df %>% filter(sex=="Male" & oy_rsv_infected_dev=="PCR or Serology positive" & vycurrentasthma_dev=="Six-year current asthma")) %>% unlist(),
+            count(df %>% filter(sex=="Male" & oy_rsv_infected_dev=="PCR or Serology positive" & vycurrentasthma_dev=="Not")) %>% unlist(),
+            count(df %>% filter(sex=="Male" & oy_rsv_infected_dev=="Not" & vycurrentasthma_dev=="Six-year current asthma")) %>% unlist(),
+            count(df %>% filter(sex=="Male" & oy_rsv_infected_dev=="Not" & vycurrentasthma_dev=="Not")) %>% unlist(),
+            count(df %>% filter(sex=="Female" & oy_rsv_infected_dev=="PCR or Serology positive" & vycurrentasthma_dev=="Six-year current asthma")) %>% unlist(),
+            count(df %>% filter(sex=="Female" & oy_rsv_infected_dev=="PCR or Serology positive" & vycurrentasthma_dev=="Not")) %>% unlist(),
+            count(df %>% filter(sex=="Female" & oy_rsv_infected_dev=="Not" & vycurrentasthma_dev=="Six-year current asthma")) %>% unlist(),
+            count(df %>% filter(sex=="Female" & oy_rsv_infected_dev=="Not" & vycurrentasthma_dev=="Not")) %>% unlist()
+                  )
+)
+
+tab2 <- xtabs(count ~ RSV_infection_first_life + child_asthma_development + sex, data = dmm_tab_data2)
+tab2
+
+# Female
+oddsratio(x = tab2[c(1,3,2,4)],
+          y = NULL,
+          method = "wald",
+          conf.level = 0.95,
+          rev = "neither")
+
+# Male
+oddsratio(x = tab2[c(5,7,6,8)],
+          y = NULL,
+          method = "wald",
+          conf.level = 0.95,
+          rev = "neither")
+# Model based
+fit_emm2 <- glm(vycurrentasthma_dev ~ oy_rsv_infected_dev*sex,
+           family = binomial(link = "logit"),
+           data = df)
+summary(fit_emm2)
+epi.interaction(fit_emm2,
+                coef = c(2,3,4),
+                param = "product",
+                conf.level = 0.95)
+
+# Breslow Day Test
+fit_bdt2 <- glm(vycurrentasthma_dev ~ oy_rsv_infected_dev+any_family_asthma,
+           family = binomial(link = "logit"),
+           data = df)
+BreslowDayTest(tab, OR = exp(summary(fit_bdt2)[["coefficients"]][1,1]))
+```
+
+
+Our logistic regression models could not find any effect modifications
+based on both additive and multiplicative interaction. On the other
+hand, we performed the Breslow Day tests of homogeneity using the odds
+ratio adjusted for family history of asthma and infant sex, and they found significant
+results. It means there might be a effect modification either additive or
+multiplicative scale. In total, we determined a family history of asthma
+and infant sex might not be an effect modifiers because based on the two-by-two
+contingency table, there may not be a large difference of child asthma
+inception between children with family history of asthma and those
+without it.
 
 14. Table 4. For at least 5 of your confounders, identify whether the
     confounder is associated with outcome among the unexposed. Hint:
@@ -647,19 +704,19 @@ summary(fit_adj)
     and outcome assessment, and c) how your measurements conform to the
     generally agreed upon standards for your exposure or outcome
 
-The INSPIRE cohort included about 2,000 participants prospectively, and
+The INSPIRE cohort included about 1,946 unique dyads of infant and mother prospectively, and
 had only small number of missing data about baseline characteristics.
 Regarding exposure variables, we categorized them to avoid missing data
 based on theoretically valid approach. Regarding outcome variables, we
-had about 30% of missing data in the five-year current asthma. However,
+had about 30% of missing data in the five-year current asthma due to loss of folow-up. However,
 as shown below, there were not large difference of participants'
 characteristics between completed and loss-to-follow-up participants. In
-addition, the INSPIRE cohort had multiple short-term outcomes such as
-recurrent wheeze, thus we can perform some sensitivity analyses to
+addition, the INSPIRE cohort has multiple short-term outcomes such as
+recurrent wheeze for increased sample size and power in regression analyses. Thus we can perform some sensitivity analyses to
 evaluate the validity of our main analysis. The participants' data were
 collected by skilled-staffs, and the quality was adequate and met the
 general standard. Regarding participant's characteristics, we combined
-the information of electrical medical record, administrative data, and
+the information of electronic medical record, administrative data, and
 questionnaires. Regarding the exposure variables, we collected RSV
 serology at 1-year follow-up in addition to RSV PCR at illness visits.
 The measurement error of these variables could be small. Regarding the
@@ -701,10 +758,10 @@ associated with the risk of subsequent child asthma inception". To date,
 it is unclear whether age at first RSV infection confers variable risk
 for subsequent child asthma inception. This would be important if
 delaying the first infection were a method of preventing asthma
-development. For this topic, our systematic review revealed the age of
+development. Our systematic review revealed the age of
 after 3-6 months of age might confer the highest risk, but previous
-observational studies have a high risk of bias such as measurement error
-of RSV infection and asthma, as well as many unadjusted confounding
+observational studies had severe issues of bias such as measurement error
+of RSV infection and asthma outcome, as well as many unmeasured confounding
 factors. In particular, shared genetic predisposition to both severe RSV
 infection and child asthma inception is likely a major confounding
 factor when defining the exposure of interest as a clinical phenotype of
@@ -713,7 +770,7 @@ RSV infection rather than an exposure, only severe infection
 the complete spectrum (mild to severe) of RSV infection, instead of only
 severe RSV infection, to overcome the confounding effect of genetic
 predisposition to both severe RSV infection and child asthma inception.
-In addition, we precisely collected all potential confounders. INSPIRE
+In addition, we ascertained for major relevant potential confounders. INSPIRE
 study would be adequate to address our research question. Our study
 would overcome the limitations in previous studies.
 
@@ -723,7 +780,9 @@ would overcome the limitations in previous studies.
 
 Our study is feasible and suitable for identifying the effect RSV
 infection during the first year of life.
-
+  
+  
+  
 **Reference**
 
 [@binns2022; @brunwasser2020; @brunwasser2020a; @coutts2020;

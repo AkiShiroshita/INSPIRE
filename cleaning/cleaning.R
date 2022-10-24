@@ -77,6 +77,10 @@ df <- left_join(df1, df2a, by = "cfsubjid")
 
 df2b %>% glimpse()
 
+# some missing are coded as "missing"
+df2b <- df2b %>%
+  mutate_all(.funs = ~ na_if(., "missing"))
+
 # making serology var (0: negative, 1: positive)
 
 df2b <- df2b %>% 
@@ -90,6 +94,10 @@ df <- left_join(df, df2b, by = "cfsubjid")
 ## cleaning of df3 ------
 
 df3 %>% glimpse()
+
+# some missing are coded as "missing"
+df3 <- df3 %>%
+  mutate_all(.funs = ~ na_if(., "missing"))
 
 # categorize to binary
 
