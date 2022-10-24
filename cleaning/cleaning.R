@@ -39,7 +39,7 @@ df1 %>% glimpse()
 # making sex var (0: female, 1:male)
 # making race/ethnicity var (0: NHW, 1:NHB, 2:Hispanic and other)
 # making residence 6 month var (0: rural, 1:urban)
-# deleting completely missing maternal education and residence_0y
+# deleting completely missing residence_0y
 # delete state because all children are "TN"
 # change upper to lower case of CFSUBJD for merging to other datasets
 
@@ -53,7 +53,7 @@ df1 <- df1 %>%
                                   RESIDENCE_6MOS == "Rural" ~ 0,
                                   RESIDENCE_6MOS == "Not found" ~ NA_real_),) %>% 
   select(-starts_with("RACE"), -SEX, -HISPANIC, -RESIDENCE_6MOS) %>% 
-  select(-MAT_EDUC, -RESIDENCE_OY, -STATESITE) %>% 
+  select(-RESIDENCE_OY, -STATESITE) %>% 
   rename(cfsubjid = "CFSUBJID")
   
 ## cleaning of df2a ------
@@ -71,19 +71,17 @@ df2a <- df2a %>%
 
 # join to df1
 
-df <- left_join(df, df2a, by = "cfsubjid")
+df <- left_join(df1, df2a, by = "cfsubjid")
 
 ## cleaning of df2b ------
 
 df2b %>% glimpse()
 
 # making serology var (0: negative, 1: positive)
-# delete completely missing oysmpbldrschdate
 
 df2b <- df2b %>% 
   mutate(rsv_exposed_dev = case_when(rsv_exposed_dev == "no" ~ 0,
-                                     rsv_exposed_dev == "yes" ~ 1)) %>% 
-  select(-oysmpbldrschdate)
+                                     rsv_exposed_dev == "yes" ~ 1)) 
 
 # join to df1
 
@@ -96,24 +94,28 @@ df3 %>% glimpse()
 # categorize to binary
 
 df3 <- df3 %>% 
-  mutate(fycurrentasthma_dev == case_when(fycurrentasthma_dev == "no" ~ 0,
-                                          fycurrentasthma_dev == "yes" ~ 1),
-         oyrecwhz2p_dev == case_when(oyrecwhz2p_dev == "no" ~ 0,
+  mutate(oyrecwhz2p_dev = case_when(oyrecwhz2p_dev == "no" ~ 0,
                                      oyrecwhz2p_dev == "yes" ~ 1),
-         tyrecwhz2p_dev == case_when(tyrecwhz2p_dev == "no" ~ 0,
+         tyrecwhz2p_dev = case_when(tyrecwhz2p_dev == "no" ~ 0,
                                      tyrecwhz2p_dev == "yes" ~ 1),
-         ryrecwhz2p_dev == case_when(ryrecwhz2p_dev == "no" ~ 0,
+         ryrecwhz2p_dev = case_when(ryrecwhz2p_dev == "no" ~ 0,
                                      ryrecwhz2p_dev == "yes" ~ 1),
-         fyrecwhz2p_dev == case_when(fyrecwhz2p_dev == "no" ~ 0,
+         fyrecwhz2p_dev = case_when(fyrecwhz2p_dev == "no" ~ 0,
                                      fyrecwhz2p_dev == "yes" ~ 1),
-         vyrecwhz2p_dev == case_when(vyrecwhz2p_dev == "no" ~ 0,
+         vyrecwhz2p_dev = case_when(vyrecwhz2p_dev == "no" ~ 0,
                                      vyrecwhz2p_dev == "yes" ~ 1),
-         xyrecwhz2p_dev == case_when(xyrecwhz2p_dev == "no" ~ 0,
-                                     xyrecwhz2p_dev == "yes" ~ 1)
-         )
+         xyrecwhz2p_dev = case_when(xyrecwhz2p_dev == "no" ~ 0,
+                                     xyrecwhz2p_dev == "yes" ~ 1),
+         vycurrentasthma_dev = case_when(vycurrentasthma_dev == "no" ~ 0,
+                                         vycurrentasthma_dev == "yes" ~ 1),
+         fycurrentasthma_dev = case_when(fycurrentasthma_dev == "no" ~ 0,
+                                         fycurrentasthma_dev == "yes" ~ 1))
 
 # join to df
 
 df <- left_join(df, df3, by = "cfsubjid")
 
+# confirmation
 
+df %>% glimpse()
+df %>% write_csv("output/analysis_data.csv")
