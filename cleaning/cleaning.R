@@ -28,6 +28,7 @@ df1 <- read_csv("input/20221014AkiDataset/20221014AkiDataset_set1.csv")
 df2a <- read_csv("input/20221014AkiDataset/20221014AkiDataset_set2a.csv")
 df2b <- read_csv("input/20221014AkiDataset/20221014AkiDataset_set2b.csv")
 df3 <- read_csv("input/20221014AkiDataset/20221014AkiDataset_set3.csv")
+df4 <- read_csv("input/20221014AkiDataset/20221014AkiDataset_set4.csv")
 
 # Cleaning ----------------------------------------------------------------
 
@@ -52,8 +53,7 @@ df1 <- df1 %>%
          residence6mo = case_when(RESIDENCE_6MOS == "Urban" ~ 1,
                                   RESIDENCE_6MOS == "Rural" ~ 0,
                                   RESIDENCE_6MOS == "Not found" ~ NA_real_),) %>% 
-  select(-starts_with("RACE"), -SEX, -HISPANIC, -RESIDENCE_6MOS) %>% 
-  select(-RESIDENCE_OY, -STATESITE) %>% 
+  select(-starts_with("RACE"), -SEX, -HISPANIC, -RESIDENCE_6MOS, -MAT_EDUC, -RESIDENCE_OY, -STATESITE) %>% 
   rename(cfsubjid = "CFSUBJID")
   
 ## cleaning of df2a ------
@@ -67,7 +67,8 @@ df2a <- df2a %>%
   group_by(cfsubjid) %>% 
   arrange(rftodaydate) %>%
   filter(row_number() == 1) %>% 
-  ungroup()
+  ungroup() %>% 
+  select(-rftodaydate, -BSS2_dev)
 
 # join to df1
 
@@ -79,13 +80,14 @@ df2b %>% glimpse()
 
 # some missing are coded as "missing"
 df2b <- df2b %>%
-  mutate_all(.funs = ~ na_if(., "missing"))
+  mutate(rsv_exposed_dev = na_if(rsv_exposed_dev, "missing"))
 
 # making serology var (0: negative, 1: positive)
 
 df2b <- df2b %>% 
   mutate(rsv_exposed_dev = case_when(rsv_exposed_dev == "no" ~ 0,
-                                     rsv_exposed_dev == "yes" ~ 1)) 
+                                     rsv_exposed_dev == "yes" ~ 1)) %>% 
+  select(-oysmpbldrschdate)
 
 # join to df1
 
@@ -97,7 +99,8 @@ df3 %>% glimpse()
 
 # some missing are coded as "missing"
 df3 <- df3 %>%
-  mutate_all(.funs = ~ na_if(., "missing"))
+  mutate(vycurrentasthma_dev = na_if(vycurrentasthma_dev, "missing"),
+         fycurrentasthma_dev = na_if(fycurrentasthma_dev, "missing"))
 
 # categorize to binary
 
@@ -122,6 +125,16 @@ df3 <- df3 %>%
 # join to df
 
 df <- left_join(df, df3, by = "cfsubjid")
+
+## cleaning of df4 ------
+
+df4 %>% glimpse()
+df4 <- df4 %>% 
+  arrange(lmsubjid) %>% 
+  rename("cfsubjid" = "lmsubjid") %>% 
+  select(cfsubjid, lmday1)
+
+df <- left_join(df, df4, by = "cfsubjid")
 
 # confirmation
 

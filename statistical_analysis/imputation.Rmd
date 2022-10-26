@@ -1,0 +1,88 @@
+---
+title: "Imputation method"
+author: "Akihiro Shiroshita"
+date: "2022-10-26"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	fig.pos="t",
+	fig.height=4,
+	dpi = 350,
+	out.extra=""
+)
+
+packages = c("devtools",
+             "usethis",
+             "here",
+             "readr",
+             "readxl",
+             "expss",
+             "tidyverse",
+             "tidylog",
+             "lubridate",
+             "ggplot2",
+             "ggplotgui",
+             "ggthemes",
+             "arsenal",
+             "stats",
+             "epitools",
+             "DescTools",
+             "epiR",
+             "RVAideMemoire",
+             "tableone",
+             "flextable",
+             "huxtable",
+             "naniar",
+             "VIM",
+             "margins",
+             "modmarg",
+             "broom")
+
+package.check <- lapply(packages, FUN = function(x){
+  if (!require(x, character.only = TRUE)){
+    install.packages(x, dependencies = TRUE)
+    library(x, character.only = TRUE)
+  }
+})
+
+df <- read_csv(here("output/analysis_data.csv"))
+```
+
+# Imputation approach for Age at first RSV infection  
+
+Imputation for RSV serology negative infants  
+
+```{r}
+df %>% filter(anyrsv_dev == 1) %>% count()
+df %>% filter(rsv_exposed_dev == 1) %>% count()
+df %>% filter((anyrsv_dev != 1 | is.na(anyrsv_dev)) & rsv_exposed_dev == 1) %>% count()
+
+df_miss <- df %>% 
+  filter((anyrsv_dev != 1 | is.na(anyrsv_dev)) & rsv_exposed_dev == 1) %>% 
+  mutate(age_range = lmday1 - INFANTDOB + 1) %>% 
+  select(INFANTDOB, age_range)
+
+graph <- ggplot(df_miss, aes(x = age_range)) +
+  geom_density(position = 'identity', alpha = 0.8, adjust = 1) +
+  theme_bw()
+graph
+```
+
+## Imputation for the whole dataset
+
+https://rpubs.com/nichols16/411765
+```{r}
+for(i in 1:nrow(df)) {
+  if(is.na(df$age[i])) {
+    df$age[i] <- ages_imp$ages[j]
+    j = j+1
+  } 
+}
+sum(is.na(titan$age)) 
+```
+
