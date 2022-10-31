@@ -67,8 +67,7 @@ df2a <- df2a %>%
   group_by(cfsubjid) %>% 
   arrange(rftodaydate) %>%
   filter(row_number() == 1) %>% 
-  ungroup() %>% 
-  select(-rftodaydate, -BSS2_dev)
+  ungroup() 
 
 # join to df1
 
