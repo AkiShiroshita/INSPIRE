@@ -1,0 +1,402 @@
+---
+title: "Primary analysis"
+author: "Akihiro Shiroshita"
+date: "`r Sys.time()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+
+
+packages = c("devtools",
+             "usethis",
+             "here",
+             "readr",
+             "readxl",
+             "expss",
+             "tidyverse",
+             "tidylog",
+             "lubridate",
+             "ggplot2",
+             "ggplotgui",
+             "ggthemes",
+             "arsenal",
+             "stats",
+             "epitools",
+             "DescTools",
+             "epiR",
+             "RVAideMemoire",
+             "tableone",
+             "flextable",
+             "huxtable",
+             "naniar",
+             "VIM",
+             "margins",
+             "modmarg",
+             "broom",
+             "aod",
+             "fitdistrplus",
+             "rms",
+             "Hmisc",
+             "mice",
+             "mitools",
+             "margins")
+
+package.check <- lapply(packages, FUN = function(x){
+  if (!require(x, character.only = TRUE)){
+    install.packages(x, dependencies = TRUE)
+    library(x, character.only = TRUE)
+  }
+})
+
+# import data
+df <- read_csv(here("output/analysis_data.csv"))
+
+# create age variables
+df_cont <- df %>% 
+  mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
+         rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day"))) %>% 
+  filter(oy_rsv_infected_dev == 1)
+
+df_cat <- df %>% 
+  mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
+         rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day")),
+         rsv_age_cat = case_when(rsv_pcr_age < 180 ~ 1,
+                                 180 <= rsv_pcr_age & rsv_pcr_age < 365 ~ 0,
+                                 365 < rsv_pcr_age | (is.na(rsv_pcr_age) & is.na(rsv_sero_age)) ~ 2))
+
+df_cont2 <- df %>% 
+  mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         rsv_pcr_age = 700,
+         rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day"))) %>% 
+  filter(oy_rsv_infected_dev != 1 | is.na(oy_rsv_infected_dev)) %>% 
+  dplyr::select(ry_rec_whz_dev, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, sex, ethnicity, DELIVERYMODE, MATSMOKE_PREG, MAT_ASTHMA_EVER, INSURANCE_CHILD, EVERBREASTFED, DAYCARE_OY, INFANTDOB, lmday1) 
+```
+
+# Complete case analysis (continuous age)  
+
+## Univariable logistic regression   
+```{r}
+ddist <- datadist(df_cont)
+options(datadist='ddist')
+
+# crude
+fit_crude_rcs <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 5), data=df_cont)
+summary(fit_crude_rcs)
+ggplot(Predict(fit_crude_rcs, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma")
+anova(fit_crude_rcs)
+```
+
+## Multivariable logistic regression  
+
+Considering sex as a confounder 
+
+```{r}
+# adjusted
+fit_adjusted_rcs <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 5) + sex, data=df_cont)
+summary(fit_adjusted_rcs)
+ggplot(Predict(fit_adjusted_rcs, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma")
+anova(fit_adjusted_rcs)
+```
+# Complete case analysis (categorical age)  
+
+## Univariable logistic regression  
+
+```{r}
+fit_crude_cat <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat),
+                     family = binomial(link = "logit"),
+                     data = df_cat)
+tidy(fit_crude_cat, exponentiate = TRUE, conf.int = TRUE)
+```
+
+## Multivariable logistic regression  
+
+```{r}
+fit_adj_cat <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat) + sex,
+                     family = binomial(link = "logit"),
+                     data = df_cat)
+tidy(fit_adj_cat, exponentiate = TRUE, conf.int = TRUE)
+```
+
+# Single imputation  
+
+```{r}
+df_sing_imp <- df_cont %>% 
+  filter(oy_rsv_infected_dev == 1) %>% 
+  dplyr::select(ry_rec_whz_dev, vycurrentasthma_dev, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, sex, ethnicity, DELIVERYMODE, MATSMOKE_PREG, MAT_ASTHMA_EVER, INSURANCE_CHILD, EVERBREASTFED, DAYCARE_OY, INFANTDOB, lmday1) 
+
+df_sing_imp <- df_sing_imp %>% 
+  arrange(INFANTDOB)
+
+set.seed(1234)
+
+for (row in 1:(nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))))) {
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & !is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2012/10/1")), min(df_sing_imp$lmday1[row], as.Date("2013/4/1"), na.rm = TRUE), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+
+for (row in (nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1")))+1):(nrow(df_sing_imp %>% filter(as.Date("2012/4/1")+1 <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))) + nrow(df_sing_imp %>% filter(as.Date("2013/4/1") <= INFANTDOB & INFANTDOB < as.Date("2014/4/1"))))){
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & !is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2013/10/1")), min(df_sing_imp$lmday1[row], as.Date("2014/4/1"), na.rm = TRUE), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+
+for (row in 1:(nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))))){
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2012/10/1")), as.Date("2013/4/1"), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+
+for (row in (nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1")))+1):(nrow(df_sing_imp %>% filter(as.Date("2012/4/1")+1 <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))) + nrow(df_sing_imp %>% filter(as.Date("2013/4/1") <= INFANTDOB & INFANTDOB < as.Date("2014/4/1"))))){
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2013/10/1")), as.Date("2014/4/1"), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+```
+
+# validation of single imputation  
+
+A validation study among the infants without missing age of PCR positive. It compares imputed values with original ones. The results is good (not too precise, not too random)! 
+
+```{r}
+df_sing_imp_val <- df_sing_imp %>% 
+  filter(!is.na(rsv_pcr_age)) %>% 
+  mutate(val = NA_real_)
+
+for (row in 1:(nrow(df_sing_imp_val %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))))) {
+  df_sing_imp_val$val[row] = if_else(is.na(df_sing_imp_val$val[row]),  trunc(time_length(interval(df_sing_imp_val$INFANTDOB[row], sample(seq(max(df_sing_imp_val$INFANTDOB[row], as.Date("2012/10/1")), min(df_sing_imp_val$lmday1[row], as.Date("2013/4/1"), na.rm = TRUE), by = "day"), 1)), "day")), df_sing_imp_val$val[row])
+}
+
+for (row in (nrow(df_sing_imp_val %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1")))+1):(nrow(df_sing_imp_val %>% filter(as.Date("2012/4/1")+1 <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))) + nrow(df_sing_imp_val %>% filter(as.Date("2013/4/1") <= INFANTDOB & INFANTDOB < as.Date("2014/4/1"))))){
+  df_sing_imp_val$val[row] = if_else(is.na(df_sing_imp_val$val[row]),  trunc(time_length(interval(df_sing_imp_val$INFANTDOB[row], sample(seq(max(df_sing_imp_val$INFANTDOB[row], as.Date("2013/10/1")), min(df_sing_imp_val$lmday1[row], as.Date("2014/4/1"), na.rm = TRUE), by = "day"), 1)), "day")), df_sing_imp_val$val[row])
+}
+
+df_sing_imp_val <- df_sing_imp_val %>% 
+  mutate(disc = abs(rsv_pcr_age - val)) 
+mean(df_sing_imp_val$disc)
+
+graph <- ggplot(df_sing_imp_val, aes(x = val, y = rsv_pcr_age)) +
+  geom_point() +
+  labs(x = 'Imputed age', y = 'Ogirinal value') +
+  xlim(0, 300) + 
+  ylim(0, 300) + 
+  theme_bw()
+graph
+```
+
+# Outcome analysis (continuous age) 
+## Univariable logistic regression  
+
+```{r}
+ddist <- datadist(df_sing_imp)
+options(datadist='ddist')
+
+# crude
+fit_crude_rcs_imp <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 5), data=df_sing_imp)
+summary(fit_crude_rcs_imp)
+ggplot(Predict(fit_crude_rcs_imp, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma")
+anova(fit_crude_rcs_imp)
+```
+
+
+## Multivariable logistic regression
+### 5-year current asthma    
+
+```{r}
+fit_sing_imp_rcs_adj2 <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 5) + sex, data=df_sing_imp)
+summary(fit_sing_imp_rcs_adj2)
+ggplot(Predict(fit_sing_imp_rcs_adj2, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma")
+
+anova(fit_sing_imp_rcs_adj2)
+```
+
+### Recurrent wheeze at age 3  
+
+```{r}
+fit_sing_imp_rcs_adj3 <- lrm(ry_rec_whz_dev ~ rcs(rsv_pcr_age, 5) + sex, data=df_sing_imp)
+summary(fit_sing_imp_rcs_adj3)
+ggplot(Predict(fit_sing_imp_rcs_adj3, fun=plogis, "rsv_pcr_age"), ylab="Probability of recurrent wheeze at 3 year")
+
+anova(fit_sing_imp_rcs_adj3)
+```
+
+# Outcome analysis (categorical age)    
+
+## Univariable logistic regression  
+
+```{r include=FALSE}
+df_cat_imp <- rbind(df_cont2, df_sing_imp)
+
+df_cat_imp <- df_cat_imp %>% 
+  mutate(rsv_age_cat = case_when(rsv_pcr_age < 180 ~ 1,
+                                 180 <= rsv_pcr_age & rsv_pcr_age < 365 ~ 0,
+                                 365 < rsv_pcr_age ~ 2))
+```
+
+```{r}
+ddist <- datadist(df_cat_imp)
+options(datadist='ddist')
+
+# crude
+fit_crude_cat_imp <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat),
+                     family = binomial(link = "logit"),
+                     data = df_cat_imp)
+tidy(fit_crude_cat_imp, exponentiate = TRUE, conf.int = TRUE)
+```
+
+## Multivariable logistic regression  
+
+```{r}
+fit_adj_cat_imp <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat) + sex,
+                     family = binomial(link = "logit"),
+                     data = df_cat_imp)
+tidy(fit_adj_cat_imp, exponentiate = TRUE, conf.int = TRUE)
+```
+
+# Sensitivity analysis  
+
+### 4-year current asthma    
+
+```{r}
+ddist <- datadist(df_sing_imp)
+options(datadist='ddist')
+
+fit_sing_imp_rcs_adj_sen <- lrm(fycurrentasthma_dev ~ rcs(rsv_pcr_age, 5) + sex, data=df_sing_imp)
+summary(fit_sing_imp_rcs_adj_sen)
+ggplot(Predict(fit_sing_imp_rcs_adj_sen, fun=plogis, "rsv_pcr_age"), ylab="Probability of 4-year current asthma")
+
+anova(fit_sing_imp_rcs_adj_sen)
+```
+# Exploratory analyses  
+
+## Different cut-offs    
+
+### < 3 months, 3-12 months, < 12 months (Single imputation)  
+
+```{r}
+df_cat_imp <- df_cat_imp %>% 
+  mutate(rsv_age_cat = case_when(rsv_pcr_age < 90 ~ 1,
+                                 90 <= rsv_pcr_age & rsv_pcr_age < 365 ~ 0,
+                                 365 < rsv_pcr_age ~ 2))
+
+ddist <- datadist(df_cat_imp)
+options(datadist='ddist')
+
+# crude
+fit_crude_cat_imp <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat),
+                     family = binomial(link = "logit"),
+                     data = df_cat_imp)
+tidy(fit_crude_cat_imp, exponentiate = TRUE, conf.int = TRUE)
+```
+
+### < 100 days, 100-200 days, < 200 days (Single imputation)  
+
+```{r}
+df_cat_imp <- df_cat_imp %>% 
+  mutate(rsv_age_cat = case_when(rsv_pcr_age < 100 ~ 1,
+                                 100 <= rsv_pcr_age & rsv_pcr_age < 200 ~ 0,
+                                 200 < rsv_pcr_age ~ 2))
+
+ddist <- datadist(df_cat_imp)
+options(datadist='ddist')
+
+# crude
+fit_crude_cat_imp <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat),
+                     family = binomial(link = "logit"),
+                     data = df_cat_imp)
+tidy(fit_crude_cat_imp, exponentiate = TRUE, conf.int = TRUE)
+```
+
+### 100-200 days vs < 100 days or < 200 days (Single imputation, Multivariable)  
+
+```{r}
+df_cat_imp <- df_cat_imp %>% 
+  mutate(rsv_age_cat = case_when(rsv_pcr_age < 100 | 200 < rsv_pcr_age ~ 0,
+                                 100 <= rsv_pcr_age & rsv_pcr_age <= 200 ~ 1))
+
+ddist <- datadist(df_cat_imp)
+options(datadist='ddist')
+
+# multivariable
+fit_crude_cat_imp <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat) + sex,
+                     family = binomial(link = "logit"),
+                     data = df_cat_imp)
+tidy(fit_crude_cat_imp, exponentiate = TRUE, conf.int = TRUE)
+```
+### 100-200 days vs < 100 days or < 200 days (Complete case analysis, Multivariable)  
+
+```{r}
+df_cat <- df_cat %>% 
+  mutate(rsv_age_cat = case_when(rsv_pcr_age < 100 | 200 < rsv_pcr_age ~ 0,
+                                 100 <= rsv_pcr_age & rsv_pcr_age <= 200 ~ 1))
+
+ddist <- datadist(df_cat)
+options(datadist='ddist')
+
+# crude
+fit_adj_cat <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat) + sex,
+                     family = binomial(link = "logit"),
+                     data = df_cat)
+tidy(fit_adj_cat, exponentiate = TRUE, conf.int = TRUE)
+```
+### 90-210 days vs < 90 days or < 210 days (Single imputation, Multivariable)  
+
+```{r}
+df_cat_imp <- df_cat_imp %>% 
+  mutate(rsv_age_cat = case_when(rsv_pcr_age < 90 | 210 < rsv_pcr_age ~ 0,
+                                 90 <= rsv_pcr_age & rsv_pcr_age <= 210 ~ 1))
+
+ddist <- datadist(df_cat_imp)
+options(datadist='ddist')
+
+# multivariable
+fit_crude_cat_imp <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat) + sex,
+                     family = binomial(link = "logit"),
+                     data = df_cat_imp)
+tidy(fit_crude_cat_imp, exponentiate = TRUE, conf.int = TRUE)
+```
+
+# Different knots  
+
+### 3 knots (Single imputation)  
+```{r}
+ddist <- datadist(df_sing_imp)
+options(datadist='ddist')
+
+fit_sing_imp_rcs_adj_sen2 <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 3), data=df_sing_imp)
+summary(fit_sing_imp_rcs_adj_sen2)
+ggplot(Predict(fit_sing_imp_rcs_adj_sen2, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma")
+
+anova(fit_sing_imp_rcs_adj_sen2)
+```
+
+### 4 knots (Single imputation)
+```{r}
+ddist <- datadist(df_sing_imp)
+options(datadist='ddist')
+
+fit_sing_imp_rcs_adj_sen3 <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 4), data=df_sing_imp)
+summary(fit_sing_imp_rcs_adj_sen3)
+ggplot(Predict(fit_sing_imp_rcs_adj_sen3, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma")
+
+anova(fit_sing_imp_rcs_adj_sen3)
+```
+
