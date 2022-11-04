@@ -63,10 +63,12 @@ package.check <- lapply(packages, FUN = function(x){
 
 **Research question**
 
-Is the age at the first respiratory syncytial virus (RSV) infection
-associated with the risk of subsequent child asthma inception? In this
-assignment, more specifically, is RSV infection during the first year of
-life associated with the risk of subsequent child asthma inception?
+What is the age at the first respiratory syncytial virus (RSV) infection
+strongly associated with the risk of subsequent childhood asthma
+inception among term and healthy infants? In this assignment, more
+specifically, is RSV infection during the first year of life associated
+with the risk of subsequent childhood asthma inception among term and
+healthy infants?
 
 2.  In one or two paragraphs, state the study design for this specific
     project (this may be different from the design for the parent
@@ -108,6 +110,12 @@ severe RSV infection and child asthma inception [@brunwasser2020].
 Exclusion criteria were mechanical ventilation before enrolment, receipt
 of RSV immunoprophylaxis and significant medical co-morbidities.
 
+**Comments**\
+At this phase, I cannot access the information about the recruitment
+(e.g. how many infants met the inclusion criteria but declined to
+participate, or were excluded because of the exclusion criteria). The
+patient selection flows are described below.
+
 3.  In one paragraph, describe the exposure assessment and how it will
     be analyzed. For the purposes of this assignment, you should use
     either a dichotomous or categorical exposure variable. If your
@@ -117,15 +125,50 @@ of RSV immunoprophylaxis and significant medical co-morbidities.
 
 **Exposure**
 
-For evaluating the association between age at the first RSV infection
-and the outcomes, we restricted to RSV-infected participants who were
-detected by nasal PCR to define infant age of infection in the first
-year of life. Children who were RSV PCR negative and RSV serology
-positive at age 1-year as RSV infected RSV infected during the first
-year of life while those who were RSV PCR negative and RSV serology
-negative at age 1-year as RSV infected after age one. This assumption is
-reasonable because most children acquire first RSV infection in the
-first 2 years of life [@piedimonte2014a].
+First RSV infection was determined during each infant's first year of
+life by biweekly active and passive surveillance using RSV RT-PCR to
+identify RSV infections, and serum RSV antibody testing at one year. The
+age at the first RSV infection was determined by the RSV PCR positive
+age at specimen collection. For complete case analysis, we restricted to
+RSV-infected participants who were detected by nasal PCR to define
+infant age of infection in the first year of life. Children who were RSV
+PCR negative and RSV serology positive at age 1-year were considered as
+RSV infected during the first year of life while those who were RSV PCR
+negative and RSV serology negative at age 1-year as RSV infected after
+age one. This assumption is reasonable because most children acquire
+first RSV infection in the first 2 years of life [@piedimonte2014a]. For
+imputed models, we performed a single imputation of age of first RSV
+infection for infants who were defined by serology only by leveraging
+the infant's date of birth and the known RSV dates of circulation and
+rates during the infant's first year of life.
+
+**Comments**
+
+We performed multiple statistical analyses described below: complete
+case analysis as well as imputed models using either categorical or
+continuous age at first RSV infection. The cut-off of categorical age
+was 6 months and 1-year because our systematic review revealed the
+association between RSV infection and childhood asthma inception might
+be stronger after 6 months of age compared to before 3-6 months. We
+collected RSV serology at 1-year follow-up visit which supplemented the
+results of RSV PCR during the first year of life, thus we imputed the
+age at the first RSV infection for children with only RSV serology
+positive. A single imputation incorporating the RSV seasonality was
+conducted. Because of the sample size deficiency, we could not
+categorize the age further (e.g. \< 3months, 3-6 months, \< 6 months).
+
+**Important**
+
+Just for the simplicity, we used a dichotomized exposure variable (first
+RSV infection during the first year of life, or not) without imputation.
+This analysis is for this assignment, and we did not use for our main
+analysis. In the main text, the results of dichotomized exposure
+variable are sumarized while in the appendix, the results of our main
+analyes are summarized.
+
+Figure: Patient selection flow for categorical age models
+
+Figure: Patient selection flow for continuous age models
 
 4.  In one paragraph, describe the outcome assessment and how it will be
     analyzed. For the purposes of this assignment, you should use a
@@ -135,11 +178,44 @@ first 2 years of life [@piedimonte2014a].
 
 **Outcome**
 
-Current asthma at 5 years was defined by both 1) physician diagnosis by
-5 years and 2) parental report of symptoms, systemic steroid use, or
-healthcare utilization for asthma in prior 12 months. Annual recurrent
-wheeze at 2,3,4 years was defined as parental report of ≥2 wheezing
+The primary outcome was current asthma at 5 years which was defined by
+both 1) physician diagnosis by 5 years and 2) parental report of
+symptoms, systemic steroid use, or healthcare utilization for asthma in
+prior 12 months. The secondary outcomes were annual recurrent wheeze at
+2,3, and 4 years which were defined as parental report of ≥2 wheezing
 episodes since the child's last birthday.
+
+**Statistical analysis**\
+*Descriptive analysis*
+
+Enrollment participants' characteristics were described by RSV status
+for RSV-infected infants and non-RSV infected infants as frequencies and
+proportions for categorical variables and as means with standard
+deviations for continuous variables.
+
+*Complete case analysis*
+
+We used univariable and multivariable logistic regression models using
+children without missing data. For a categorical age model, we included
+children with positive PCR and/or positive serology as well as those
+with negative PCR and serology. For a continuous age model, we included
+children with positive PCR and/or positive serology as well as those
+with negative PCR and serology
+
+*Imputed model*
+
+Same as the complete case analyses, we used univariable and
+multivariable logistic regression models using children with RSV PCR
+positive and/or serology positive at 1-year follow-up vitis. The date at
+first RSV infection for children with only RSV serology positive was
+randomly draw from the RSV season from October 1 to April 1. Then, we
+calculated the age of first RSV infection by subtracting it from each
+child's date of birth.
+
+*Software*
+
+For statistical analyses, we used R software version 4.2.1 (R foundation
+for Statistical Computing, Vienna, Austria)
 
 5.  Based on your literature review and any other substantive knowledge
     you have of the subject, list the potential confounders and effect
@@ -149,8 +225,17 @@ episodes since the child's last birthday.
 
 **Confounders**
 
-Based on previous literature, we selected confouders. [@shi2020;
-@coutts2020a] ![Direct acyclic graph](images/dag.svg)
+Based on previous literature, we selected sex (male vs. female) as a
+clinical relevant confouder [@shi2020; @coutts2020a]. In addition, the
+following variables might be a potential confounders or risk factors for
+RSV infection or childhood asthma: child race/ethnicity
+(White-non-Hispanic vs. all other ethnic and racial groups), mode of
+delivery (vaginal vs. cesarean), maternal marital status (married vs.
+single), maternal education, maternal asthma status (absent vs.
+present), and insurance status (Medicaid vs. all other insurance),
+breast feeding status, presence of sibling, and day care attendance in
+the first year of life. In our study, because of the limited sample
+size, only sex was adjusted in the models.
 
 **Effect modifier**
 
@@ -159,25 +244,19 @@ and genetic influences such as 17q1221 SNPs are expected as effect
 modifiers [@binns2022; @chowdhury2021; @lim2010; @liptzin2015; @liu2018;
 @martel2009].
 
-**Covariates**
-
-Models were adjusted for the covariates chosen a priori based on their
-clinical relevance as confounders or risk factors [@shi2020;
-@coutts2020a]. Covariates included infant sex (male vs. female), child
-race/ethnicity (White-non-Hispanic vs. all other ethnic and racial
-groups), mode of delivery (vaginal vs. cesarean), maternal marital
-status (married vs. single), maternal education, maternal or paternal
-asthma status (absent vs. present), and insurance status (Medicaid vs.
-all other insurance), breast feeding status, presence of siblings and
-day care attendance in the first year of life.
-
 **Comments**
 
-Regarding confounders, our cohort study included all necessary
-information. Regarding effect modifications, our cohort study collected
-the information about viral co-infection and genetic influences, for
-this phase of analysis, we evaluated the effect modification of infant
-sex, family history of asthma and breastfeeding just for simplicity.
+Regarding potential confounders, our cohort study included all necessary
+information, but the variables other than sex, we determined the
+clinical importance as confounders may be small and they could be
+considered as risk factors. Thus, considering the limited sample size,
+sex was incorporated as a covariate in the multivariable models.
+
+Regarding effect modifications, our cohort study collected the
+information about viral co-infection and genetic influences, for this
+phase of analysis, we evaluated the effect modification of infant sex,
+family history of asthma and breastfeeding because we cannot easily
+access viral co-infection and genetic influences.
 
 6.  Label all the variables in your dataset.
 7.  For all categorical or dichotomous variables, add value labels for
@@ -186,28 +265,24 @@ sex, family history of asthma and breastfeeding just for simplicity.
 ```{r}
 df <- read_csv(here("output/analysis_data.csv"))
 
-df %>% glimpse()
-df %>% colnames()
-
 df <- df %>% 
-  select(cfsubjid, STUDYENROLLDATE, INFANTDOB,
+  mutate(rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day"))) %>%
+  dplyr::select(cfsubjid, STUDYENROLLDATE, INFANTDOB,
          # baseline characteristics (numeric)
          GESTAGEWK, BIRTHWEIGHT_GRAM, BREASTFEDDUR, OTHERLIVSIBS_BIO,
          OTHERLIVSIBS_HAL, HOUSEHOLDSIZE, MAT_EDUCYEARS,
          # baseline characteristics (categorical)
          sex, ethnicity, MATSMOKE_PREG, DAYCARE_OY, MAT_ASTHMA_EVER,
-         PAT_ASTHMA_EVER, EVERBREASTFED, DELIVERYMODE,
+         EVERBREASTFED, DELIVERYMODE,
          MAT_MARITAL_STATUS, INSURANCE_CHILD, residence6mo,
          # exposure
          #rftodaydate, # PCR sampling date
          anyrsv_dev, # RSV positive
+         rsv_pcr_age, # age at positive PCR sampling date
          #BSS2_dev, # severity
          oy_rsv_infected_dev, # PCR or serology positive
-         rsv_exposed_dev, # serology,
-         #oysmpbldrschdate, # serology sampling date
+         rsv_exposed_dev, # serology
          # outcome
-         oyrecwhz2p_dev, tyrecwhz2p_dev, ryrecwhz2p_dev,
-         fyrecwhz2p_dev, vyrecwhz2p_dev, xyrecwhz2p_dev,
          oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev,
          fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev,
          fycurrentasthma_dev, vycurrentasthma_dev
@@ -217,7 +292,8 @@ df <- df %>%
                BREASTFEDDUR = "Duration of breastfeeding (weeks)",
                OTHERLIVSIBS_BIO = "Number of biological siblings",
                OTHERLIVSIBS_HAL = "Number of half siblings",
-               HOUSEHOLDSIZE = "Total number of people") %>% 
+               HOUSEHOLDSIZE = "Total number of people",
+               rsv_pcr_age = "Age at positive RSV PCR sampling date") %>% 
   mutate(# baseline characteristics
          enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
          sex = factor(sex, levels = c(0,1), labels = c("Female", "Male")),
@@ -229,7 +305,6 @@ df <- df %>%
                                    1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
          other_sib_cat = factor(other_sib_cat, levels = c(0,1,2), labels = c("None", "One sibling", "2 or more siblings")),
          MAT_ASTHMA_EVER = factor(MAT_ASTHMA_EVER, levels = c(0,1), labels = c("Not", "Maternal asthma")),
-         PAT_ASTHMA_EVER = factor(PAT_ASTHMA_EVER, levels = c(0,1), labels = c("Not", "Paternal asthma")),
          EVERBREASTFED = factor(EVERBREASTFED, levels = c(0,1), labels = c("Not", "Breast feeding")),
          DELIVERYMODE = factor(DELIVERYMODE, levels = c(0,1), labels = c("Vaginal", "C-section")),
          MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
@@ -240,16 +315,10 @@ df <- df %>%
          INSURANCE_CHILD = factor(INSURANCE_CHILD, levels = c(1,2,3,4,5), labels = c("Medicaid", "Private", "Self-Pay", "None", "Other")),
          residence6mo = factor(residence6mo, levels = c(0,1), labels = c("Rural", "Urban")),
          # exposure
-         anyrsv_dev = factor(anyrsv_dev, levels = c(0,1), labels = c("RSV PCR positive", "Not")),
+         anyrsv_dev = factor(anyrsv_dev, levels = c(0,1), labels = c("Not","RSV PCR positive")),
          oy_rsv_infected_dev = factor(oy_rsv_infected_dev, levels = c(0,1), labels = c("Not", "PCR or Serology positive")),
          rsv_exposed_dev = factor(rsv_exposed_dev, levels = c(0,1), labels = c("Not", "Serology positive")),
          # outcome
-         oyrecwhz2p_dev = factor(oyrecwhz2p_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes during the first year")),
-         tyrecwhz2p_dev = factor(tyrecwhz2p_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the second year")),
-         ryrecwhz2p_dev = factor(ryrecwhz2p_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the third year")),
-         fyrecwhz2p_dev  = factor(fyrecwhz2p_dev , levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the fourth year")),
-         vyrecwhz2p_dev = factor(vyrecwhz2p_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the fifth year")),
-         xyrecwhz2p_dev = factor(xyrecwhz2p_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze of more than 2 episodes  during the sixth year")),
          oy_rec_whz_dev = factor(oy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the first year")),
          ty_rec_whz_dev = factor(ty_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the second year")),
          ry_rec_whz_dev = factor(ry_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the third year")),
@@ -272,11 +341,11 @@ pct_miss(df)
 # baseline characteristics
 
 gg_miss_var(df %>% select(# baseline characteristics (numeric)
-          GESTAGEWK, BIRTHWEIGHT_GRAM, BREASTFEDDUR, OTHERLIVSIBS_BIO,
+          enroll_age, GESTAGEWK, BIRTHWEIGHT_GRAM, BREASTFEDDUR, OTHERLIVSIBS_BIO,
           OTHERLIVSIBS_HAL, HOUSEHOLDSIZE,
           # baseline characteristics (categorical)
           sex, ethnicity, MATSMOKE_PREG, DAYCARE_OY, MAT_ASTHMA_EVER,
-          PAT_ASTHMA_EVER, EVERBREASTFED, DELIVERYMODE,
+          EVERBREASTFED, DELIVERYMODE,
           MAT_EDUCYEARS, MAT_MARITAL_STATUS, INSURANCE_CHILD, residence6mo)) +
   labs(title = "Participants' baseline characteristics")
 
@@ -284,6 +353,7 @@ gg_miss_var(df %>% select(# baseline characteristics (numeric)
 
 gg_miss_var(df %>% select(#rftodaydate, # PCR sampling date
          anyrsv_dev, # RSV positive
+         rsv_pcr_age,
          #BSS2_dev, # severity
          oy_rsv_infected_dev, # PCR or serology positive
          rsv_exposed_dev, # serology,
@@ -293,15 +363,13 @@ gg_miss_var(df %>% select(#rftodaydate, # PCR sampling date
 
 # outcome
 
-gg_miss_var(df %>% select(oyrecwhz2p_dev, tyrecwhz2p_dev, ryrecwhz2p_dev,
-         fyrecwhz2p_dev, vyrecwhz2p_dev, xyrecwhz2p_dev,
+gg_miss_var(df %>% select(
          oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev,
          fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev,
          fycurrentasthma_dev, vycurrentasthma_dev)) +
   labs(title = "Outcome status")
 
-gg_miss_upset(df %>% select(oyrecwhz2p_dev, tyrecwhz2p_dev, ryrecwhz2p_dev,
-         fyrecwhz2p_dev, vyrecwhz2p_dev, xyrecwhz2p_dev,
+gg_miss_upset(df %>% select(
          oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev,
          fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev,
          fycurrentasthma_dev, vycurrentasthma_dev))
@@ -318,13 +386,18 @@ Regarding exposure variables,
 
 -   anyrsv_dev: 1-PCR positive, NA-missing + negative
 
+-   rsv_pcr_age: RSV PCR positive age at specimen collection
+
 -   rsv_exposed_dev: 1-serology positive, 0-negative, NA-missing
 
 -   oy_rsv_infected_dev: 1-PCR or serology positive, 0-negative,
     NA-missing
 
-We used "oy_rsv_infected_dev" as an exposure variable in this
-assignment.
+We used "rsv_pcr_age" as an exposure and categorized it into three
+groups: \< 6 months, 6-12 months, and after 12 months.
+
+Regarding the primary outcome of 5-year current asthma, 451 (23%) were
+missed.
 
 **Missing data**
 
@@ -333,23 +406,42 @@ baseline characteristics. Regarding exposures, for infants with RSV PCR
 positive we used the age at specimen collection. For infants or children
 for which age of RSV infection is not ascertained but known to be
 serology positive or negative, we assigned RSV infected during the first
-year of life and RSV infected after age one, respectively. Regarding
-outcomes, many outcome variables are monotone missingness pattern, that
-is when the variable was missing, then all other variables examined
-later were also missing.
+year of life and RSV infected after age one, respectively. For imputed
+models, we assigned the imputed value which was randomly draw between
+(date of birth or October 1) and (date of RSV serology positive at
+1-year visit or April 1). Regarding outcomes, about 300 children missed
+all the outcome information after the 2-year visit (monotone missing).
+That is when the variable was missing, then all other variables examined
+later were also missing. Regarding the primary outcome of 5-year current
+asthma, 588 (30%) were missed. There were 451 (23%) missing data in
+4-year current asthma, and 481 (25%) in recurrent wheeze at 4-year
+visits. As a sensitivity analysis, we used a different outcome
+definition.
+
+**Comments**
+
+R code of single imputation is described in the appendix.
 
 9.  Table 0. Create a list of all the variables in your dataset,
     including exposure, outcome, covariates, confounders and effect
-    modifiers. Include the following:
+    modifiers.
 
-<!-- -->
+A total of 1946 term healthy infants were followed through 6 years of
+age. The mean age of enrolment was 1.6 months. Among them, 1220 (63%) of
+children had at least one acute illness visit, and 944 (54%) infants
+were infected with RSV during their first year of life. Among those RSV
+infected, 361 (38%) infants were detected by nasal PCR at acute illness
+visits and 582 (62%) infants were detected only by RSV serology at
+1-year. The mean age of first RSV infection was about 4 months (standard
+deviation of 2 months). At the five-year follow-up, 286 (19%) had
+asthma.
 
-a.  Variable name
-b.  Variable label
-c.  Variable type (continuous, categorical, dichotomous)
-d.  Range for continuous variables OR unique values and value labels for
-    categorical and dichotomous variables
-e.  Percent missing
+**Comments**
+
+Because the table became so busy, we summarized the results into
+different tables. Percent missing is summarized in the above question.
+The variable name, variable label, and variable type (continuous,
+categorical, dichotomous) are summarized in the appendix.
 
 ```{r}
 vars <- df %>% 
@@ -365,21 +457,21 @@ table0 <- CreateTableOne(vars = vars,
                          includeNA = FALSE,
                          factorVars = factorVars)
 table0 %>% 
-  print(test = FALSE) %>% 
+  print(test = FALSE, nonnormal = c("GESTAGEWK", "BIRTHWEIGHT_GRAM", "BREASTFEDDUR", "OTHERLIVSIBS_BIO", "OTHERLIVSIBS_HAL", "HOUSEHOLDSIZE", "MAT_EDUCYEARS")) %>% 
   write.csv(here("output/table0.csv"))
 ```
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE}
 dvars <- df %>% 
-  select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, INSURANCE_CHILD, GESTAGEWK,
+  dplyr::select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, MAT_ASTHMA_EVER, INSURANCE_CHILD, GESTAGEWK,
          BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat, oy_rsv_infected_dev,
-         vy_rec_whz_dev) %>%
+         vycurrentasthma_dev) %>%
   colnames()
 dfactorVars <- df %>% 
-  select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, INSURANCE_CHILD, GESTAGEWK,
+  dplyr::select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, MAT_ASTHMA_EVER, INSURANCE_CHILD, GESTAGEWK,
          BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat, oy_rsv_infected_dev,
-         vy_rec_whz_dev) %>%
-  select(where(is.factor)) %>% 
+         vycurrentasthma_dev) %>%
+  dplyr::select(where(is.factor)) %>% 
   colnames()
 
 dtable0 <- CreateTableOne(vars = dvars,
@@ -397,13 +489,14 @@ dtable0 %>%
                     "\t More than High school/general educational development",
                     "Maternal marital status", "Single",
                     "\t Married", "\t Divorces/Separated",
+                    "Maternal history of asthma",
                     "Insurance of infant", "\t Medicaid", "\t Private", "\t Self-Pay", "\t None", "\t Other",
                     "Gestational age (weeks)", "Birth weight", 
-                    "Birth by cesarean section", "Daycase use furing the first year", "Ever any breastfeeding",
+                    "Birth by cesarean section", "Daycare use during the first year", "Ever any breastfeeding",
                     "Presence of biological siblings", "\t None", "\t One sibling", "\t Two or more Siblings",
                     "RSV infection detected by PCR or serology during the first year",
                     "Five-year current asthma")) %>% 
-  select(Variables, everything()) %>% 
+  dplyr::select(Variables, everything()) %>% 
   regulartable() %>% 
   theme_booktabs() %>% 
   autofit()
@@ -416,7 +509,7 @@ dtable0 %>%
 ```{r}
 num_vars <- df %>% 
   select(GESTAGEWK, BIRTHWEIGHT_GRAM, BREASTFEDDUR,
-         OTHERLIVSIBS_BIO, OTHERLIVSIBS_HAL, MAT_EDUCYEARS #, BSS2_dev
+         OTHERLIVSIBS_BIO, OTHERLIVSIBS_HAL, MAT_EDUCYEARS, rsv_pcr_age
          ) %>% 
   colnames()
 
@@ -426,12 +519,22 @@ for (var in num_vars) {
        main=paste('Histogram of', var),
        xlab = paste(var))
 }
+
+boxplot(df$rsv_pcr_age)
+summary(df$rsv_pcr_age)
 ```
 
 The distributions of Infant's birth weight and maternal education are
-similar to normal distribution. Regarding other variables, their
-distributions are right-skewed. In the analysis, we categorized all
-skewed variables.
+similar to a normal distribution. Regarding other variables, their
+distributions are right-skewed. In the analysis, we did not use any
+continuous covariates, thus transformation or categorization was not
+necessary. The histogram of age at first RSV infection is similar to
+normal distribution, and the number of infants infected RSV at extremely
+early or late age was small. However, the age effect for childhood
+asthma inception would be non-linear. Thus, in the analysis, we
+categorized the age into three groups (\< 6 months, 6-12 months, \< 12
+months) or used a restricted cubic spline function with 5 knots for
+continuous age.
 
 11. Table 1. Create a table with categories of your main exposure
     variable as the columns. If your study design is cohort or
@@ -441,7 +544,11 @@ skewed variables.
     variables and mean ± SD for continuous variables) for all potential
     confounders by categories of your main exposure.
 
-```{r}
+*Comments*\
+We created a summary table stratified by the first RSV infection during
+the first year of life.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 table1 <- CreateTableOne(vars = vars,
                          data = df %>% drop_na(oy_rsv_infected_dev),
                          includeNA = FALSE,
@@ -483,7 +590,7 @@ dtable1 %>%
                     "\t Married", "\t Divorces/Separated",
                     "Insurance of infant", "\t Medicaid", "\t Private", "\t Self-Pay", "\t None", "\t Other",
                     "Gestational age (weeks)", "Birth weight", 
-                    "Birth by cesarean section", "Daycase use furing the first year", "Ever any breastfeeding",
+                    "Birth by cesarean section", "Daycare use during the first year", "Ever any breastfeeding",
                     "Presence of biological siblings", "\t None", "\t One sibling", "\t Two or more Siblings",
                     "Five-year current asthma")) %>% 
   select(Variables, everything()) %>% 
@@ -495,6 +602,12 @@ dtable1 %>%
 12. Table 2. Calculate the crude measure of association (including 95%
     confidence intervals) between your exposure and outcome. Interpret
     this association. How did you arrive at your chosen reference group?
+
+*Comments*\
+We summarize a complete case analysis result of a logistic regression
+with categorized age exposure (first RSV infection \< 12 months or not)
+here. The results of other complete case analyses and imputed models are
+summarized in the appendix.
 
 ```{r}
 fit <- glm(vycurrentasthma_dev ~ oy_rsv_infected_dev,
@@ -844,8 +957,9 @@ the odds of subsequent child asthma inception increased.
 confounders <- c("sex",
                 #"ethnicity",
                 "DELIVERYMODE",
-                "MAT_MARITAL_STATUS",
+                #"MAT_MARITAL_STATUS",
                 # "MAT_EDUCYEARS",
+                "MAT_ASTHMA_EVER",
                 #"INSURANCE_CHILD",
                 "EVERBREASTFED",
                 "DAYCARE_OY")
@@ -919,14 +1033,30 @@ of RSV infection and breastfeeding in the main analysis to improve the
 model fitness.
 
 ```{r}
-fit_adj <- glm(vycurrentasthma_dev ~ oy_rsv_infected_dev + sex + ethnicity + 
-                 DELIVERYMODE + MAT_MARITAL_STATUS + MAT_EDUCYEARS +
-                 MAT_ASTHMA_EVER + INSURANCE_CHILD + EVERBREASTFED + DAYCARE_OY +
-                 oy_rsv_infected_dev:EVERBREASTFED,
+fit_crude <- glm(vycurrentasthma_dev ~ oy_rsv_infected_dev + oy_rsv_infected_dev:EVERBREASTFED,
+               family = binomial(link = "logit"),
+               data = df)
+dfit_crude <- huxreg(fit_crude,
+               coefs = c("RSV infection during the first year of life" = "oy_rsv_infected_devPCR or Serology positive", "Interaction term" = "oy_rsv_infected_devPCR or Serology positive:EVERBREASTFEDBreast feeding"),
+                         statistics = c(N = "nobs"),
+               tidy_args = list(exponentiate = TRUE),
+               ci_level = 0.95,
+               error_format = "[{conf.low}, {conf.high}]") %>% 
+  set_caption("Crude odds ratio of RSV infection during the first year of life on child asthma") %>% 
+  as_flextable() 
+dfit_crude
+
+fit_crude_marg <- margins(fit_crude,
+                    variables = "oy_rsv_infected_dev")
+summary(fit_crude_marg)
+```
+
+```{r}
+fit_adj <- glm(vycurrentasthma_dev ~ oy_rsv_infected_dev + sex + oy_rsv_infected_dev:EVERBREASTFED,
                family = binomial(link = "logit"),
                data = df)
 dfit_adj <- huxreg(fit_adj,
-               coefs = c("RSV infection during the first year of life" = "oy_rsv_infected_devPCR or Serology positive", "Interaction term" = "oy_rsv_infected_devPCR or Serology positive:EVERBREASTFEDBreast feeding"),
+               coefs = c("RSV infection during the first year of life" = "oy_rsv_infected_devPCR or Serology positive", "Interaction term" = "oy_rsv_infected_devPCR or Serology positive:EVERBREASTFEDBreast feeding", "Male"="sexMale"),
                          statistics = c(N = "nobs"),
                tidy_args = list(exponentiate = TRUE),
                ci_level = 0.95,
