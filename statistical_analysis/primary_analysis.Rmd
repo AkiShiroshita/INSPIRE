@@ -45,7 +45,8 @@ packages = c("devtools",
              "Hmisc",
              "mice",
              "mitools",
-             "margins")
+             "margins",
+             "geepack")
 
 package.check <- lapply(packages, FUN = function(x){
   if (!require(x, character.only = TRUE)){
@@ -68,7 +69,9 @@ df_cont <- df %>%
                                    1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
          rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
          rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day"))) %>% 
-  filter(oy_rsv_infected_dev == 1)
+  filter(oy_rsv_infected_dev == 1) %>% 
+  dplyr::select(cfsubjid, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, sex, INFANTDOB, lmday1, oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev, fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev, oy_rsv_infected_dev) 
+
 
 df_cat <- df %>% 
   mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
@@ -84,6 +87,13 @@ df_cat <- df %>%
                                  180 <= rsv_pcr_age & rsv_pcr_age < 365 ~ 0,
                                  365 < rsv_pcr_age | (is.na(rsv_pcr_age) & is.na(rsv_sero_age)) ~ 2))
 
+df_sing_imp <- df_cont %>% 
+  filter(oy_rsv_infected_dev == 1) %>% 
+  dplyr::select(cfsubjid, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, sex, INFANTDOB, lmday1, oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev, fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev, oy_rsv_infected_dev) 
+
+df_sing_imp <- df_sing_imp %>% 
+  arrange(INFANTDOB)
+
 df_cont2 <- df %>% 
   mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
          MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
@@ -95,7 +105,7 @@ df_cont2 <- df %>%
          rsv_pcr_age = 700,
          rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day"))) %>% 
   filter(oy_rsv_infected_dev != 1 | is.na(oy_rsv_infected_dev)) %>% 
-  dplyr::select(ry_rec_whz_dev, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, sex, ethnicity, DELIVERYMODE, MATSMOKE_PREG, MAT_ASTHMA_EVER, INSURANCE_CHILD, EVERBREASTFED, DAYCARE_OY, INFANTDOB, lmday1) 
+  dplyr::select(cfsubjid, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, sex, INFANTDOB, lmday1, oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev, fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev, oy_rsv_infected_dev) 
 ```
 
 # Complete case analysis (continuous age)  
@@ -146,13 +156,6 @@ tidy(fit_adj_cat, exponentiate = TRUE, conf.int = TRUE)
 # Single imputation  
 
 ```{r}
-df_sing_imp <- df_cont %>% 
-  filter(oy_rsv_infected_dev == 1) %>% 
-  dplyr::select(ry_rec_whz_dev, vycurrentasthma_dev, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, sex, ethnicity, DELIVERYMODE, MATSMOKE_PREG, MAT_ASTHMA_EVER, INSURANCE_CHILD, EVERBREASTFED, DAYCARE_OY, INFANTDOB, lmday1) 
-
-df_sing_imp <- df_sing_imp %>% 
-  arrange(INFANTDOB)
-
 set.seed(1234)
 
 for (row in 1:(nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))))) {
@@ -210,7 +213,7 @@ ddist <- datadist(df_sing_imp)
 options(datadist='ddist')
 
 # crude
-fit_crude_rcs_imp <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 5), data=df_sing_imp)
+fit_crude_rcs_imp <- lrm(vycurrentasthma_dev ~ rcs(rsv_pcr_age, 3), data=df_sing_imp)
 summary(fit_crude_rcs_imp)
 ggplot(Predict(fit_crude_rcs_imp, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma")
 anova(fit_crude_rcs_imp)
@@ -348,9 +351,6 @@ df_cat <- df_cat %>%
   mutate(rsv_age_cat = case_when(rsv_pcr_age < 100 | 200 < rsv_pcr_age ~ 0,
                                  100 <= rsv_pcr_age & rsv_pcr_age <= 200 ~ 1))
 
-ddist <- datadist(df_cat)
-options(datadist='ddist')
-
 # crude
 fit_adj_cat <- glm(vycurrentasthma_dev ~ factor(rsv_age_cat) + sex,
                      family = binomial(link = "logit"),
@@ -400,3 +400,23 @@ ggplot(Predict(fit_sing_imp_rcs_adj_sen3, fun=plogis, "rsv_pcr_age"), ylab="Prob
 anova(fit_sing_imp_rcs_adj_sen3)
 ```
 
+# Secondary analysis  
+
+## Recurrent wheeze  
+
+```{r}
+df_cat_imp <- df_cat_imp %>% 
+  mutate(rsv_age_cat = case_when(rsv_pcr_age < 100 | 200 < rsv_pcr_age ~ 0,
+                                 100 <= rsv_pcr_age & rsv_pcr_age <= 200 ~ 1)) %>% 
+  pivot_longer(cols = c(oy_rec_whz_dev, ty_rec_whz_dev, fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev),
+               names_to = "recurrent_wheeze_type",
+               values_to = "recurrent_wheeze")
+
+fit_gee_imp <- geeglm(recurrent_wheeze ~ factor(rsv_age_cat),
+                      id = cfsubjid,
+                      std.err = "san.se",
+                      corstr = "exchangeable",
+                      family = binomial(link = "logit"),
+                     data = df_cat_imp)
+summary(fit_gee_imp)
+```
