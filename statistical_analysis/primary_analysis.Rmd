@@ -1,5 +1,5 @@
 ---
-title: "Primary analysis"
+title: "Analysis results"
 author: "Akihiro Shiroshita"
 date: "`r Sys.time()`"
 output: 
@@ -119,8 +119,8 @@ df_tab <- df %>%
          fy_rec_whz_dev = factor(fy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the fourth year")),
          vy_rec_whz_dev = factor(vy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the fifth year")),
          xy_rec_whz_dev = factor(xy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the sixth year")),
-         fycurrentasthma_dev = factor(fycurrentasthma_dev, levels = c(0,1), labels = c("Not", "Five-year current asthma")),
-         fy_rec_whz_dev = factor(vycurrentasthma_dev, levels = c(0,1), labels = c("Not", "Six-year current asthma")),
+         fycurrentasthma_dev = factor(fycurrentasthma_dev, levels = c(0,1), labels = c("Not", "Four-year current asthma")),
+         vycurrentasthma_dev = factor(vycurrentasthma_dev, levels = c(0,1), labels = c("Not", "Five-year current asthma")),
          mis_age_tag = if_else(is.na(rsv_pcr_age), 1, 0),
          mis_age_tag = factor(mis_age_tag, levels = c(0,1), labels = c("PCR positive", "PCR negative/missing"))) %>% 
   filter(oy_rsv_infected_dev == "PCR or Serology positive")
@@ -168,7 +168,7 @@ df_sing_imp <- df_sing_imp2 <- df %>%
          rsv_pcr_age_ori = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
          rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day"))) %>% 
   filter(oy_rsv_infected_dev == 1) %>% 
-  dplyr::select(cfsubjid, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, rsv_pcr_age_ori, sex, INFANTDOB, lmday1, oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev, fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev, oy_rsv_infected_dev) %>% 
+  dplyr::select(cfsubjid, fycurrentasthma_dev, vycurrentasthma_dev, rsv_pcr_age, rsv_pcr_age_ori, sex, INFANTDOB, lmday1, oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev, fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev, oy_rsv_infected_dev, GESTAGEWK, DAYCARE_OY, MATSMOKE_PREG, MAT_ASTHMA_EVER, EVERBREASTFED, MAT_BMI_PREPREG, DELIVERYMODE, OTHERLIVSIBS_BIO) %>% 
   arrange(INFANTDOB)
 
 ```
@@ -179,7 +179,7 @@ df_sing_imp <- df_sing_imp2 <- df %>%
 
 ```{r}
 miss_tab <- miss_var_summary(df_tab)
-#miss_tab
+miss_tab
 ```
 
 ```{r}
@@ -213,11 +213,11 @@ dtable0 %>%
   as.data.frame() %>% 
   mutate("Variables" = c("Number of infants", "Age at enrollment (month)",
                     "Male sex", 
-                    "Ethnicity", "\t Non-hispanic White", "\t Non-hispanic balck", "\t Hispanic and other",
+                    "Ethnicity", "\t Non-Hispanic White", "\t Non-Hispanic Black", "\t Hispanic and other",
                     "Maternal education", "\t Less than high school/general educational development",
                     "\t High school/general educational development",
                     "\t More than High school/general educational development",
-                    "Maternal marital status", "Single",
+                    "Maternal marital status", "\t Single",
                     "\t Married", "\t Divorces/Separated",
                     "Maternal history of asthma",
                     "Insurance of infant", "\t Medicaid", "\t Private", "\t Self-Pay", "\t None", "\t Other",
@@ -232,16 +232,16 @@ dtable0 %>%
   autofit()
 ```
 
-## Table 1 stratified by the presence of PCR samling date
+## Table one stratified by the presence of PCR samling date
 
 ```{r}
 dvars1 <- df_tab %>% 
-  dplyr::select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, INSURANCE_CHILD, GESTAGEWK,
+  dplyr::select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, MAT_ASTHMA_EVER, INSURANCE_CHILD, GESTAGEWK,
          BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat, 
          fy_rec_whz_dev, vycurrentasthma_dev) %>%
   colnames()
 dfactorVars1 <- df_tab %>% 
-  dplyr::select(enroll_age, sex, ethnicity, MAT_MARITAL_STATUS, INSURANCE_CHILD, GESTAGEWK,
+  dplyr::select(enroll_age, sex, ethnicity, MAT_MARITAL_STATUS, MAT_ASTHMA_EVER, INSURANCE_CHILD, GESTAGEWK,
          BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat, fy_rec_whz_dev,
          vycurrentasthma_dev) %>%
   dplyr::select(where(is.factor)) %>% 
@@ -251,18 +251,19 @@ dtable1 <- CreateTableOne(vars = dvars1,
                          data = df_tab,
                          includeNA = FALSE,
                          factorVars = dfactorVars1,
-                         strata = "mis_age_tag")
+                         strata = "mis_age_tag",
+                         addOverall = TRUE)
 dtable1 %>% 
   print(test = FALSE, contDigits = 1, catDigits = 1) %>% 
   as.data.frame() %>% 
   mutate("Variables" = c("Number of infants", "Age at enrollment (month)",
                     "Male sex", 
-                    "Ethnicity", "\t Non-hispanic White", "\t Non-hispanic balck", "\t Hispanic and other",
+                    "Ethnicity", "\t Non-Hispanic White", "\t Non-Hispanic Black", "\t Hispanic and other",
                     "Maternal education", "\t Less than high school/general educational development",
                     "\t High school/general educational development",
                     "\t More than High school/general educational development",
                     "Maternal marital status", "\t Single",
-                    "\t Married", "\t Divorces/Separated",
+                    "\t Married", "\t Divorces/Separated", "Maternal history of asthma",
                     "Insurance of infant", "\t Medicaid", "\t Private", "\t Self-Pay", "\t None", "\t Other",
                     "Gestational age (weeks)", "Birth weight", 
                     "Birth by cesarean section", "Daycare use during the first year", "Ever any breastfeeding",
@@ -274,34 +275,34 @@ dtable1 %>%
   autofit()
 ```
 
-## Table one without missing data in RSV PCR or 5-year current asthma
+## Table one stratified by missing in 5-year current asthma
 
 ```{r}
-df_tab2 <- df_tab %>% 
-  filter(!is.na(fy_rec_whz_dev) & !is.na(rsv_pcr_age))
+df_tab <- df_tab %>% 
+  mutate(mis_asthma_tag = if_else(is.na(vycurrentasthma_dev), 0, 1),
+         mis_asthma_tag = factor(mis_asthma_tag, levels = c(0,1), labels = c("Missing 5-year current asthma","Complete 5-year current asthma")))
 
 dvars <- df_tab %>% 
   dplyr::select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, MAT_ASTHMA_EVER, INSURANCE_CHILD, GESTAGEWK,
-         BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat, oy_rsv_infected_dev, fy_rec_whz_dev,
-         vycurrentasthma_dev) %>%
+         BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat) %>%
   colnames()
 dfactorVars <- df_tab %>% 
   dplyr::select(enroll_age, sex, ethnicity, MAT_EDUC_cat, MAT_MARITAL_STATUS, MAT_ASTHMA_EVER, INSURANCE_CHILD, GESTAGEWK,
-         BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat, oy_rsv_infected_dev, fy_rec_whz_dev,
-         vycurrentasthma_dev) %>%
+         BIRTHWEIGHT_GRAM, DELIVERYMODE, EVERBREASTFED, DAYCARE_OY, other_sib_cat, oy_rsv_infected_dev, fy_rec_whz_dev) %>%
   dplyr::select(where(is.factor)) %>% 
   colnames()
 
 dtable2 <- CreateTableOne(vars = dvars,
-                         data = df_tab2,
+                         data = df_tab,
                          includeNA = FALSE,
-                         factorVars = dfactorVars)
+                         factorVars = dfactorVars,
+                         strata = "mis_asthma_tag")
 dtable2 %>% 
   print(test = FALSE, contDigits = 1, catDigits = 1) %>% 
   as.data.frame() %>% 
   mutate("Variables" = c("Number of infants", "Age at enrollment (month)",
                     "Male sex", 
-                    "Ethnicity", "\t Non-hispanic White", "\t Non-hispanic balck", "\t Hispanic and other",
+                    "Ethnicity", "\t Non-Hispanic White", "\t Non-Hispanic Black", "\t Hispanic and other",
                     "Maternal education", "\t Less than high school/general educational development",
                     "\t High school/general educational development",
                     "\t More than High school/general educational development",
@@ -311,8 +312,7 @@ dtable2 %>%
                     "Insurance of infant", "\t Medicaid", "\t Private", "\t Self-Pay", "\t None", "\t Other",
                     "Gestational age (weeks)", "Birth weight", 
                     "Birth by cesarean section", "Daycare use during the first year", "Ever any breastfeeding",
-                    "Presence of biological siblings", "\t None", "\t One sibling", "\t Two or more Siblings", "Four-year recurrent wheeze",
-                    "Five-year current asthma")) %>% 
+                    "Presence of biological siblings", "\t None", "\t One sibling", "\t Two or more Siblings")) %>% 
   dplyr::select(Variables, everything()) %>% 
   regulartable() %>% 
   theme_booktabs() %>% 
@@ -471,7 +471,7 @@ results
 ### Step 1
 
 1.  Pick up the children who were born between **2012/4/1** and **2013/4/1**\
-2.  If RSV PCR sampling date was missing and RSV serology sampling date was **also** missing, randomly drew a date between 2012/10/1 and 2013/4/1\
+2.  If RSV PCR sampling date was missing and RSV serology sampling date was **also** missing or later than April 1, randomly drew a date between 2012/10/1 and 2013/4/1\
 3.  Then calculate the age at RSV PCR positive
 
 ### Step 2
@@ -587,7 +587,7 @@ graph
 
 This jitter plot illustrates the relationship between age at the first RSV infection and the **presence** of 5-year current asthma among the children who had PCR positive. The red dots indicate the children who developed asthma at age 5 years old. The red dots indicate the children who did not develop asthma at age 5 years.
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 df_sing_imp <- df_sing_imp %>% 
   mutate(imp_tag = if_else(is.na(rsv_pcr_age_ori), 1, 0),
          color_tag = case_when(vycurrentasthma_dev == 0 & imp_tag == 0 ~ 0,
@@ -598,14 +598,14 @@ df_sing_imp <- df_sing_imp %>%
 cols <- brewer.pal(6, "Paired")
 graph2 <- ggplot(df_sing_imp, aes(x = rsv_pcr_age, y = jitter(vycurrentasthma_dev), color = as.factor(color_tag))) +
   geom_point() +
-  scale_color_manual(values=cols[c(1,2,5,6)],
+  scale_color_manual(values=cols[c(6,5,2,1)],
                      name = "Legend",
-                     breaks = c("0", "1", "2", "3"),
+                     breaks = c("2", "3", "0", "1"),
                      labels = c("Only PCR +", "Imputed", "Only PCR +", "Imputed")) +
   labs(x = 'Age at first RSV PCR positive (days)', y = '5-year current asthma') +
   theme_classic() + 
   theme(axis.title = element_text(size = 12),
-        axis.text.x = element_text(size = 8),
+        axis.text.x = element_text(size = 12),
         axis.text.y = element_blank(),
         text = element_text(family = 'Helvetica'),
         axis.ticks.y = element_blank()) 
@@ -628,7 +628,7 @@ df_summary2 <- df_sing_imp_vis %>%
                               labels = c("0-10","10-20", "20-30", "30-40", "40-50", "50-60", "60-70", "70-80", "80-90", "90-100", "100-110", "110-120", "120-130", "130-140", "140-150", "150-160", "160-170", "170-180", "180-190", "190-200", "200-210", "210-220", "220-230", "230-240", "240-250", "250-260", "260-270", "270-280", "280-290", "290-300")),
          names = as.character(pcr_age_cat),
          prob = noutcome/n)
-df_summary2
+df_summary2 %>% write.csv("count.csv")
 
 graph2 <- ggplot() +
   geom_line(data = df_summary2, aes(x = pcr_age_cat, y = prob, color = "red", group = 1)) +
@@ -704,10 +704,7 @@ for (i in 3:5) {
 ## Continuous age + Multivariable logistic regression
 
 ```{r}
-ddist <- datadist(df_cont)
-options(datadist='ddist')
-
-ddist <- datadist(df_cont)
+ddist <- datadist(df_sing_imp)
 options(datadist='ddist')
 
 for (i in 3:5) {
@@ -751,66 +748,29 @@ imp_results
 ### Continuous age + Univariable logistic regression
 
 ```{r}
-ddist <- datadist(df_cont)
+ddist <- datadist(df_sing_imp)
 options(datadist='ddist')
-
-Knots <- c("3 knots", "4 knots", "5 knots")
-Model <- c("Univariable", "Multivariable")
-results <- expand.grid(Knots = Knots, Model = Model)
-col <- c("Coefficient of age", "p-value of age", "Non-linear effect", "Coefficient of sex", "p-value of sex", "AIC")
-results[, col] <- NA
 
 plsmo(df_cont$rsv_pcr_age,
       df_cont$fy_rec_whz_dev,
       method = "lowess",
       xlab = "Age at first RSV PCR positive (days)",
-      ylab = "Probability of 5-year current asthma")
+      ylab = "Probability of 4-year recurrent wheeze")
 title("Non-parametric smooth regression")
 
 for (i in 3:5) {
-  fit <- lrm(fy_rec_whz_dev ~ rcs(rsv_pcr_age, i), data=df_cont)
-  results[i-2, col[1]] <- anova(fit)[1,1]
-  results[i-2, col[2]] <- anova(fit)[1,3]
-  results[i-2, col[3]] <- anova(fit)[2,3]
-  results[i-2, col[6]] <- round(fit$stats['Model L.R.'] - 2*fit$stats['d.f.'], 2)
+  fit <- lrm(fy_rec_whz_dev ~ rcs(rsv_pcr_age, i), data=df_sing_imp)
+  imp_results[i+1, col[1]] <- anova(fit)[1,1]
+  imp_results[i+1, col[2]] <- anova(fit)[1,3]
+  imp_results[i+1, col[3]] <- anova(fit)[2,3]
+  imp_results[i+1, col[4]] <- anova(fit)[3,1]
+  imp_results[i+1, col[5]] <- anova(fit)[3,3]
+  imp_results[i+1, col[6]] <- round(fit$stats['Model L.R.'] - 2*fit$stats['d.f.'], 2)
 
-  fig <- ggplot(Predict(fit, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma") +
+  fig <- ggplot(Predict(fit, fun=plogis, "rsv_pcr_age"), ylab="Probability of 4-year recurrent wheeze") +
   labs(x = 'Age at first RSV PCR positive (days)',
-       y = 'Probability of 5-year current asthma',
-       title = paste("Complete case analysis (RCS with ", i, " knots)")) +
-  theme_classic() +
-  theme(
-    axis.title = element_text(size = 17),
-    axis.text = element_text(size = 10),
-    text = element_text(family = 'Helvetica'),
-    axis.ticks.x = element_blank(),
-    axis.ticks.y = element_blank()
-  ) +
-    geom_rug(aes(x = rsv_pcr_age, y = fy_rec_whz_dev), data=df_cont, color = cols[6]) +
-    scale_x_continuous(limits = c(50, 250))
-  print(fig)
-}
-```
-
-### Continuous age + Multivariable logistic regression
-
-```{r}
-ddist <- datadist(df_cont)
-options(datadist='ddist')
-
-for (i in 3:5) {
-  fit <- lrm(fy_rec_whz_dev ~ rcs(rsv_pcr_age, i) + sex, data=df_cont)
-  results[i+1, col[1]] <- anova(fit)[1,1]
-  results[i+1, col[2]] <- anova(fit)[1,3]
-  results[i+1, col[3]] <- anova(fit)[2,3]
-  results[i+1, col[4]] <- anova(fit)[3,1]
-  results[i+1, col[5]] <- anova(fit)[3,3]
-  results[i+1, col[6]] <- round(fit$stats['Model L.R.'] - 2*fit$stats['d.f.'], 2)
-
-  fig <- ggplot(Predict(fit, fun=plogis, "rsv_pcr_age"), ylab="Probability of 5-year current asthma") +
-  labs(x = 'Age at first RSV PCR positive (days)',
-       y = 'Probability of 5-year current asthma',
-       title = paste("Complete case analysis (RCS with ", i, " knots)")) +
+       y = 'Probability of 4-year recurrent wheeze',
+       title = paste("Imputed model (RCS with ", i, " knots)")) +
   theme_classic() +
   theme(
     axis.title = element_text(size = 12),
@@ -819,14 +779,47 @@ for (i in 3:5) {
     axis.ticks.x = element_blank(),
     axis.ticks.y = element_blank()
   ) +
-    geom_rug(aes(x = rsv_pcr_age, y = fy_rec_whz_dev), data=df_cont, color = cols[6]) +
-    scale_x_continuous(limits = c(50, 250))
+    geom_rug(aes(x = rsv_pcr_age, y = vycurrentasthma_dev), data=df_sing_imp, color = cols[6]) +
+    scale_x_continuous(limits = c(30, 250))
+  print(fig)
+}
+```
+
+### Continuous age + Multivariable logistic regression
+
+```{r}
+ddist <- datadist(df_sing_imp)
+options(datadist='ddist')
+
+for (i in 3:5) {
+  fit <- lrm(fy_rec_whz_dev ~ rcs(rsv_pcr_age, i) + sex, data=df_sing_imp)
+  imp_results[i+1, col[1]] <- anova(fit)[1,1]
+  imp_results[i+1, col[2]] <- anova(fit)[1,3]
+  imp_results[i+1, col[3]] <- anova(fit)[2,3]
+  imp_results[i+1, col[4]] <- anova(fit)[3,1]
+  imp_results[i+1, col[5]] <- anova(fit)[3,3]
+  imp_results[i+1, col[6]] <- round(fit$stats['Model L.R.'] - 2*fit$stats['d.f.'], 2)
+
+  fig <- ggplot(Predict(fit, fun=plogis, "rsv_pcr_age"), ylab="Probability of 4-year recurrent wheeze") +
+  labs(x = 'Age at first RSV PCR positive (days)',
+       y = 'Probability of 4-year recurrent wheeze',
+       title = paste("Imputed model (RCS with ", i, " knots)")) +
+  theme_classic() +
+  theme(
+    axis.title = element_text(size = 12),
+    axis.text = element_text(size = 8),
+    text = element_text(family = 'Helvetica'),
+    axis.ticks.x = element_blank(),
+    axis.ticks.y = element_blank()
+  ) +
+    geom_rug(aes(x = rsv_pcr_age, y = vycurrentasthma_dev), data=df_sing_imp, color = cols[6]) +
+    scale_x_continuous(limits = c(30, 250))
   print(fig)
 }
 
 ```
 
-### Complete case analysis results summary
+### Different outcome complete case analysis results summary
 
 ```{r}
 results
@@ -914,7 +907,7 @@ for (i in 3:5) {
 
 ```
 
-### Imputed models results summary
+### Differenct outcome imputed models results summary
 
 ```{r}
 imp_results
@@ -1195,9 +1188,157 @@ for (i in 3:5) {
 
 ```
 
-### Imputed models results summary
+### Differnet algorithm Imputed models results summary
 
 ```{r}
 imp_results
+```
+# Outcome imputation  
+
+```{r}
+df_sing_imp_multi_imp <- df_sing_imp %>% 
+  dplyr::select(-cfsubjid, -rsv_pcr_age_ori, -INFANTDOB, -lmday1, -oy_rsv_infected_dev, -imp_tag, -color_tag) %>% 
+  mutate(fycurrentasthma_dev=as.logical(fycurrentasthma_dev),
+         vycurrentasthma_dev=as.logical(vycurrentasthma_dev),
+         sex=as.logical(sex),
+         oy_rec_whz_dev=as.logical(oy_rec_whz_dev),
+         ty_rec_whz_dev=as.logical(ty_rec_whz_dev),
+         ry_rec_whz_dev=as.logical(ry_rec_whz_dev),
+         fy_rec_whz_dev=as.logical(fy_rec_whz_dev),
+         vy_rec_whz_dev=as.logical(vy_rec_whz_dev),
+         xy_rec_whz_dev=as.logical(xy_rec_whz_dev),
+         DAYCARE_OY=as.logical(DAYCARE_OY),
+         MATSMOKE_PREG=as.logical(MATSMOKE_PREG),
+         MAT_ASTHMA_EVER=as.logical(MAT_ASTHMA_EVER),
+         DELIVERYMODE=as.logical(DELIVERYMODE),
+         OTHERLIVSIBS_BIO=factor(OTHERLIVSIBS_BIO)
+         )
+
+m <- 100
+df_sing_imp_multi_imp100 <- mice(df_sing_imp_multi_imp,
+                 m = m,
+                 seed=1234,
+                 maxit=50,
+                 printFlag=FALSE)
+plot(df_sing_imp_multi_imp100)
+
+df_sing_imp_multi_imp100_stacked <- df_sing_imp_multi_imp100 %>% 
+  complete(action="long")
+```
+
+## Line plot  
+```{r}
+df_summary_imp <- df_sing_imp_multi_imp100_stacked %>% 
+  mutate(pcr_age_cat = cut(rsv_pcr_age, breaks = seq(0, 360, by = 10))) %>% 
+  group_by(pcr_age_cat) %>%
+  summarise(n = n(),
+            noutcome = sum(vycurrentasthma_dev), na.rm = TRUE) %>%
+  mutate(pcr_age_cat = seq(0, 290, by = 10),
+         pcr_age_cat = factor(pcr_age_cat,
+                              labels = c("0-10","10-20", "20-30", "30-40", "40-50", "50-60", "60-70", "70-80", "80-90", "90-100", "100-110", "110-120", "120-130", "130-140", "140-150", "150-160", "160-170", "170-180", "180-190", "190-200", "200-210", "210-220", "220-230", "230-240", "240-250", "250-260", "260-270", "270-280", "280-290", "290-300")),
+         names = as.character(pcr_age_cat),
+         prob = noutcome/n)
+df_summary_imp
+
+graph2 <- ggplot() +
+  geom_line(data = df_summary_imp, aes(x = pcr_age_cat, y = prob, color = "red", group = 1)) +
+  geom_point(data = df_summary_imp, aes(x = pcr_age_cat, y = prob, color = "red")) +
+  geom_line(data = df_summary, aes(x = pcr_age_cat, y = prob, color = "blue", group = 1)) +
+  geom_point(data = df_summary, aes(x = pcr_age_cat, y = prob, color = "blue")) + 
+  scale_color_manual(values=cols[c(2,6)],
+                     name = "Legend",
+                     breaks = c("blue", "red"),
+                     labels = c("Only PCR +", "Imputed data")) +
+  labs(x = 'Age at first RSV PCR positive (days)', y = 'Probability of 5-year current asthma') +
+  theme_classic() +
+  theme(
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 6),
+    text = element_text(family = 'Helvetica'),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    legend.position="none"
+  ) 
+  
+graph2
+```
+```{r}
+df_sing_imp_vis <- df_sing_imp_multi_imp100_stacked %>% 
+  drop_na(rsv_pcr_age, vycurrentasthma_dev) %>% 
+  filter(EVERBREASTFED==0)
+
+df_sing_imp_vis2 <- df_sing_imp_multi_imp100_stacked %>% 
+  drop_na(rsv_pcr_age, vycurrentasthma_dev) %>% 
+  filter(EVERBREASTFED==1)
+
+df_summary1 <- df_sing_imp_vis %>% 
+  mutate(pcr_age_cat = cut(rsv_pcr_age, breaks = seq(0, 240, by = 30))) %>% 
+  group_by(pcr_age_cat) %>%
+  summarise(n = n(),
+            noutcome = sum(vycurrentasthma_dev), na.rm = TRUE) %>%
+  mutate(pcr_age_cat = seq(0, 240, by = 30),
+         pcr_age_cat = factor(pcr_age_cat,
+                              labels = c("1 month","2 month", "3 months", "4 months", "5 months", "6 months", "7 months", "8 months", "9 months")),
+         names = as.character(pcr_age_cat),
+         prob = noutcome/n)
+
+df_summary1 %>% write.csv("exp1.csv")
+
+df_summary2 <- df_sing_imp_vis2 %>% 
+  mutate(pcr_age_cat = cut(rsv_pcr_age, breaks = seq(0, 240, by = 30))) %>% 
+  group_by(pcr_age_cat) %>%
+  summarise(n = n(),
+            noutcome = sum(vycurrentasthma_dev), na.rm = TRUE) %>%
+  mutate(pcr_age_cat = seq(0, 240, by = 30),
+         pcr_age_cat = factor(pcr_age_cat,
+                              labels = c("1 month","2 month", "3 months", "4 months", "5 months", "6 months", "7 months", "8 months", "9 months")),
+         names = as.character(pcr_age_cat),
+         prob = noutcome/n)
+
+df_summary2 %>% write.csv("exp2.csv")
+
+graph2 <- ggplot() +
+  geom_line(data = df_summary2, aes(x = pcr_age_cat, y = prob, color = "red", group = 1)) +
+  geom_point(data = df_summary2, aes(x = pcr_age_cat, y = prob, color = "red")) +
+  geom_line(data = df_summary1, aes(x = pcr_age_cat, y = prob, color = "blue", group = 1)) +
+  geom_point(data = df_summary1, aes(x = pcr_age_cat, y = prob, color = "blue")) + 
+  scale_color_manual(values=cols[c(2,6)],
+                     name = "Legend",
+                     breaks = c("blue", "red"),
+                     labels = c("Only PCR +", "Imputed data")) +
+  labs(x = 'Age at first RSV PCR positive (months)', y = 'Probability of 5-year current asthma') +
+  theme_classic() +
+  theme(
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 6),
+    text = element_text(family = 'Helvetica'),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    legend.position="none"
+  ) 
+
+graph2
+
+graph3 <- ggplot() +
+  geom_line(data = df_summary2, aes(x = pcr_age_cat, y = n, color = "red", group = 1)) +
+  geom_point(data = df_summary2, aes(x = pcr_age_cat, y = n, color = "red")) +
+  geom_line(data = df_summary1, aes(x = pcr_age_cat, y = n, color = "blue", group = 1)) +
+  geom_point(data = df_summary1, aes(x = pcr_age_cat, y = n, color = "blue")) + 
+  scale_color_manual(values=cols[c(2,6)],
+                     name = "Legend",
+                     breaks = c("blue", "red"),
+                     labels = c("Only PCR +", "Imputed data")) +
+  labs(x = 'Age at first RSV PCR positive (months)', y = 'Probability of 5-year current asthma') +
+  theme_classic() +
+  theme(
+    axis.title = element_text(size = 8),
+    axis.text = element_text(size = 6),
+    text = element_text(family = 'Helvetica'),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_text(angle = 90, hjust = 1),
+    legend.position="none"
+  ) 
+
+graph3
 ```
 
