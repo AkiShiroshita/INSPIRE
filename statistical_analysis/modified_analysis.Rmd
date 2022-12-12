@@ -1,0 +1,383 @@
+---
+title: "Analysis results"
+author: "Akihiro Shiroshita"
+date: "`r Sys.time()`"
+output: 
+    word_document:
+      toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.height = 4,
+	fig.pos = "t",
+	message = FALSE,
+	warning = FALSE,
+	dpi = 350,
+	out.extra = ""
+)
+packages = c("devtools",
+             "usethis",
+             "here",
+             "readr",
+             "readxl",
+             "expss",
+             "tidyverse",
+             "tidylog",
+             "lubridate",
+             "ggplot2",
+             "RColorBrewer",
+             "ggplotgui",
+             "ggthemes",
+             "arsenal",
+             "stats",
+             "epitools",
+             "DescTools",
+             "epiR",
+             "RVAideMemoire",
+             "tableone",
+             "flextable",
+             "huxtable",
+             "naniar",
+             "VIM",
+             "margins",
+             "modmarg",
+             "broom",
+             "aod",
+             "fitdistrplus",
+             "rms",
+             "Hmisc",
+             "mice",
+             "mitools",
+             "margins",
+             "geepack",
+             "multcomp",
+             "WeightIt",
+             "cobalt",
+             "MatchIt")
+
+package.check <- lapply(packages, FUN = function(x){
+  if (!require(x, character.only = TRUE)){
+    install.packages(x, dependencies = TRUE)
+    library(x, character.only = TRUE)
+  }
+})
+
+# import data
+df <- read_csv(here("output/analysis_data.csv"))
+
+# I created multiple datasets for each objective
+## dataset for creating table one
+df_tab <- df %>% 
+  mutate(rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day"))) %>%
+  dplyr::select(cfsubjid, STUDYENROLLDATE, INFANTDOB,
+         # baseline characteristics (numeric)
+         GESTAGEWK, BIRTHWEIGHT_GRAM, BREASTFEDDUR, OTHERLIVSIBS_BIO,
+         OTHERLIVSIBS_HAL, HOUSEHOLDSIZE, MAT_EDUCYEARS,
+         # baseline characteristics (categorical)
+         sex, ethnicity, MATSMOKE_PREG, DAYCARE_OY, MAT_ASTHMA_EVER,
+         EVERBREASTFED, DELIVERYMODE,
+         MAT_MARITAL_STATUS, INSURANCE_CHILD, residence6mo,
+         # exposure
+         #rftodaydate, # PCR sampling date
+         anyrsv_dev, # RSV positive
+         rsv_pcr_age, # age at positive PCR sampling date
+         #BSS2_dev, # severity
+         oy_rsv_infected_dev, # PCR or serology positive
+         rsv_exposed_dev, # serology
+         # outcome
+         oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev,
+         fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev,
+         fycurrentasthma_dev, vycurrentasthma_dev
+         ) %>% 
+  mutate(# baseline characteristics
+         enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
+         sex = factor(sex, levels = c(0,1), labels = c("Female", "Male")),
+         ethnicity = factor(ethnicity, levels = c(0,1,2), labels = c("Non-hispanic White", "Non-hispanic balck", "Hispanic and other")),
+         MATSMOKE_PREG = factor(MATSMOKE_PREG, levels = c(0,1), labels = c("Not", "Maternal smoking during pregnancy")),
+         DAYCARE_OY = factor(DAYCARE_OY, levels = c(0,1), labels = c("Not", "Daycase use furing the first year")),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         other_sib_cat = factor(other_sib_cat, levels = c(0,1,2), labels = c("None", "One sibling", "2 or more siblings")),
+         MAT_ASTHMA_EVER = factor(MAT_ASTHMA_EVER, levels = c(0,1), labels = c("Not", "Maternal asthma")),
+         EVERBREASTFED = factor(EVERBREASTFED, levels = c(0,1), labels = c("Not", "Breast feeding")),
+         DELIVERYMODE = factor(DELIVERYMODE, levels = c(0,1), labels = c("Vaginal", "C-section")),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         MAT_EDUC_cat = factor(MAT_EDUC_cat, levels = c(0,1,2), labels = c("less than HS/GED", "HS/GED", "more than HS/GED")),
+         MAT_MARITAL_STATUS = factor(MAT_MARITAL_STATUS, levels = c(1,2,3), labels = c("Single", "Married", "Divorces/Separated")),
+         INSURANCE_CHILD = factor(INSURANCE_CHILD, levels = c(1,2,3,4,5), labels = c("Medicaid", "Private", "Self-Pay", "None", "Other")),
+         residence6mo = factor(residence6mo, levels = c(0,1), labels = c("Rural", "Urban")),
+         # exposure
+         anyrsv_dev = factor(anyrsv_dev, levels = c(0,1), labels = c("Not","RSV PCR positive")),
+         oy_rsv_infected_dev = factor(oy_rsv_infected_dev, levels = c(0,1), labels = c("Not", "PCR or Serology positive")),
+         rsv_exposed_dev = factor(rsv_exposed_dev, levels = c(0,1), labels = c("Not", "Serology positive")),
+         # outcome
+         oy_rec_whz_dev = factor(oy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the first year")),
+         ty_rec_whz_dev = factor(ty_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the second year")),
+         ry_rec_whz_dev = factor(ry_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the third year")),
+         fy_rec_whz_dev = factor(fy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the fourth year")),
+         vy_rec_whz_dev = factor(vy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the fifth year")),
+         xy_rec_whz_dev = factor(xy_rec_whz_dev, levels = c(0,1), labels = c("Not", "Recurrent wheeze during the sixth year")),
+         fycurrentasthma_dev = factor(fycurrentasthma_dev, levels = c(0,1), labels = c("Not", "Four-year current asthma")),
+         vycurrentasthma_dev = factor(vycurrentasthma_dev, levels = c(0,1), labels = c("Not", "Five-year current asthma")),
+         mis_age_tag = if_else(is.na(rsv_pcr_age), 1, 0),
+         mis_age_tag = factor(mis_age_tag, levels = c(0,1), labels = c("PCR positive", "PCR negative/missing"))) %>% 
+  filter(oy_rsv_infected_dev == "PCR or Serology positive")
+
+## create a dataset for a complete case analysis & continuous age model
+df_cont <- df %>% 
+  mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
+         rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day"))) %>% 
+  filter(oy_rsv_infected_dev == 1) %>% 
+  dplyr::select(cfsubjid, STUDYENROLLDATE, INFANTDOB,
+         # baseline characteristics (numeric)
+         GESTAGEWK, BIRTHWEIGHT_GRAM, BREASTFEDDUR, OTHERLIVSIBS_BIO,
+         OTHERLIVSIBS_HAL, HOUSEHOLDSIZE, MAT_EDUCYEARS,
+         # baseline characteristics (categorical)
+         sex, ethnicity, MATSMOKE_PREG, DAYCARE_OY, MAT_ASTHMA_EVER,
+         EVERBREASTFED, DELIVERYMODE,
+         MAT_MARITAL_STATUS, INSURANCE_CHILD, residence6mo,
+         # exposure
+         #rftodaydate, # PCR sampling date
+         anyrsv_dev, # RSV positive
+         rsv_pcr_age, # age at positive PCR sampling date
+         #BSS2_dev, # severity
+         oy_rsv_infected_dev, # PCR or serology positive
+         rsv_exposed_dev, # serology
+         # outcome
+         oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev,
+         fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev,
+         fycurrentasthma_dev, vycurrentasthma_dev
+         ) %>% 
+  drop_na(rsv_pcr_age, vycurrentasthma_dev)
+
+## create a dataset for a complete case analysis & categorical age model
+df_cat <- df %>% 
+  mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
+         rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day")),
+         rsv_age_cat = case_when(rsv_pcr_age < 180 ~ 1,
+                                 180 <= rsv_pcr_age & rsv_pcr_age < 365 ~ 0,
+                                 365 < rsv_pcr_age | (is.na(rsv_pcr_age) & is.na(rsv_sero_age)) ~ 2))
+
+## created a dataset for single imputation
+df_sing_imp <- df_sing_imp2 <-  df_sing_imp3 <- df_imp_mode <- df %>% 
+  mutate(enroll_age = trunc(time_length(interval(INFANTDOB, STUDYENROLLDATE), "month")),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         rsv_pcr_age = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
+         rsv_pcr_age_ori = trunc(time_length(interval(INFANTDOB, rftodaydate), "day")),
+         rsv_sero_age = trunc(time_length(interval(INFANTDOB, lmday1), "day"))) %>% 
+  mutate(sex = factor(sex),
+         ethnicity = factor(ethnicity),
+         MATSMOKE_PREG = factor(MATSMOKE_PREG),
+         DAYCARE_OY = factor(DAYCARE_OY, levels = c(0,1)),
+         other_sib_cat = case_when(OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 0 ~ 0,
+                                   OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL == 1 ~ 1,
+                                   1 < OTHERLIVSIBS_BIO + OTHERLIVSIBS_HAL ~ 2),
+         other_sib_cat = factor(other_sib_cat),
+         MAT_ASTHMA_EVER = factor(MAT_ASTHMA_EVER),
+         EVERBREASTFED = factor(EVERBREASTFED),
+         DELIVERYMODE = factor(DELIVERYMODE),
+         MAT_EDUC_cat = case_when(MAT_EDUCYEARS < 9 ~ 0,
+                                  9 <= MAT_EDUCYEARS & MAT_EDUCYEARS <= 12 ~ 1,
+                                  12 < MAT_EDUCYEARS ~ 2),
+         MAT_EDUC_cat = factor(MAT_EDUC_cat),
+         MAT_MARITAL_STATUS = factor(MAT_MARITAL_STATUS),
+         INSURANCE_CHILD = factor(INSURANCE_CHILD)) %>% 
+  filter(oy_rsv_infected_dev == 1) %>% 
+  dplyr::select(cfsubjid, STUDYENROLLDATE, INFANTDOB,
+         # baseline characteristics (numeric)
+         GESTAGEWK, BIRTHWEIGHT_GRAM, BREASTFEDDUR, OTHERLIVSIBS_BIO,
+         OTHERLIVSIBS_HAL, HOUSEHOLDSIZE, MAT_EDUCYEARS,
+         # baseline characteristics (categorical)
+         sex, ethnicity, MATSMOKE_PREG, DAYCARE_OY, MAT_ASTHMA_EVER,
+         EVERBREASTFED, DELIVERYMODE,
+         MAT_MARITAL_STATUS, INSURANCE_CHILD, residence6mo,
+         # exposure
+         #rftodaydate, # PCR sampling date
+         anyrsv_dev, # RSV positive
+         rsv_pcr_age, # age at positive PCR sampling date
+         lmday1, #BSS2_dev, # severity
+         oy_rsv_infected_dev, # PCR or serology positive
+         rsv_exposed_dev, # serology
+         # outcome
+         oy_rec_whz_dev, ty_rec_whz_dev, ry_rec_whz_dev,
+         fy_rec_whz_dev, vy_rec_whz_dev, xy_rec_whz_dev,
+         fycurrentasthma_dev, vycurrentasthma_dev
+         ) %>% 
+  arrange(INFANTDOB)
+
+```
+
+# Single imputation (mode)  
+
+## Mode imputation  
+
+```{r}
+mode_2012 <- "2012/12/30"
+mode_2013 <- "2013/12/30"
+
+for (row in 1:(nrow(df_imp_mode %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))))) {
+  df_imp_mode$rsv_pcr_age[row] = if_else(is.na(df_imp_mode$rsv_pcr_age[row]),  trunc(time_length(interval(df_imp_mode$INFANTDOB[row],ymd(mode_2012)), "day")), df_imp_mode$rsv_pcr_age[row])
+}
+
+## step 2
+
+for (row in (nrow(df_imp_mode %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1")))+1):(nrow(df_imp_mode %>% filter(as.Date("2012/4/1")+1 <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))) + nrow(df_imp_mode %>% filter(as.Date("2013/4/1") <= INFANTDOB & INFANTDOB < as.Date("2014/4/1"))))){
+  df_imp_mode$rsv_pcr_age[row] = if_else(is.na(df_imp_mode$rsv_pcr_age[row]),  trunc(time_length(interval(df_imp_mode$INFANTDOB[row], ymd(mode_2013)), "day")), df_imp_mode$rsv_pcr_age[row])
+}
+```
+
+## Single imputation (random draw)  
+
+```{r include=FALSE}
+set.seed(1234)
+
+## step 1
+
+for (row in 1:(nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))))) {
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & !is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2012/10/1")), min(df_sing_imp$lmday1[row], as.Date("2013/4/1"), na.rm = TRUE), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+
+## step 2
+
+for (row in (nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1")))+1):(nrow(df_sing_imp %>% filter(as.Date("2012/4/1")+1 <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))) + nrow(df_sing_imp %>% filter(as.Date("2013/4/1") <= INFANTDOB & INFANTDOB < as.Date("2014/4/1"))))){
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & !is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2013/10/1")), min(df_sing_imp$lmday1[row], as.Date("2014/4/1"), na.rm = TRUE), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+
+## step 3
+
+for (row in 1:(nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))))){
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2012/10/1")), as.Date("2013/4/1"), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+
+## step 4  
+
+for (row in (nrow(df_sing_imp %>% filter(as.Date("2012/4/1") <= INFANTDOB & INFANTDOB < as.Date("2013/4/1")))+1):(nrow(df_sing_imp %>% filter(as.Date("2012/4/1")+1 <= INFANTDOB & INFANTDOB < as.Date("2013/4/1"))) + nrow(df_sing_imp %>% filter(as.Date("2013/4/1") <= INFANTDOB & INFANTDOB < as.Date("2014/4/1"))))){
+  df_sing_imp$rsv_pcr_age[row] = if_else(is.na(df_sing_imp$rsv_pcr_age[row]) & is.na(df_sing_imp$lmday1[row]),  trunc(time_length(interval(df_sing_imp$INFANTDOB[row], sample(seq(max(df_sing_imp$INFANTDOB[row], as.Date("2013/10/1")), as.Date("2014/4/1"), by = "day"), 1)), "day")), df_sing_imp$rsv_pcr_age[row])
+}
+```
+
+## Generalized propensity score analysis  
+
+The individual-level treatment effect is the mean of the vector of potential outcomes.  
+Create weights that make the Pearson's correlation between the treatment and the covariates as close to zero as possible.  
+
+### Mode imputation  
+
+```{r}
+formula <- "rsv_pcr_age ~ sex + ethnicity + EVERBREASTFED + DAYCARE_OY + MATSMOKE_PREG + MAT_ASTHMA_EVER + DELIVERYMODE + OTHERLIVSIBS_BIO + MAT_EDUCYEARS + INSURANCE_CHILD + MAT_MARITAL_STATUS"
+cw <- weightit(as.formula(formula),
+               data = df_imp_mode,
+               method = "cbps",
+               over = FALSE)
+love.plot(cw,
+          binary = "std",
+          var.order = "un",
+          stats = "corr",
+          abs = TRUE,
+          threshholds = c(0.1, 0.05)) +
+  theme(legend.position = "top")
+
+fit <- glm(vycurrentasthma_dev~rsv_pcr_age + I(rsv_pcr_age^2),
+           data = df_imp_mode,
+           weights = cw$weights,
+           family=quasibinomial())
+marg <- marg(fit, var_interest="rsv_pcr_age", at=list(rsv_pcr_age = seq(30,300,10)))
+marg <- bind_rows(marg)
+colnames(marg) <- c("label", "margin", "se", "z", "pvalue", "lower", "upper")
+
+marg <- marg %>% 
+  mutate(age = seq(30,300,10),
+         margin = 100*margin,
+         upper = 100*upper,
+         lower = 100*lower,
+         group = "overall")
+
+ggplot(marg, aes(x=age)) + 
+  geom_line(aes(y=margin)) + 
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5, linetype=2) +
+  theme(legend.title = element_blank(), panel.grid.minor=element_blank()) +
+  labs(x = 'Age at first RSV PCR positive (days)',
+       y = 'Probability of 5-year current asthma',
+       title = "Imputed model (mode imputation)") +
+  theme_classic() +
+  theme(
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 8),
+        text = element_text(family = 'Helvetica'),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank()
+    ) 
+```
+
+### Single imputation  
+
+```{r}
+formula <- "rsv_pcr_age ~ sex + ethnicity + EVERBREASTFED + DAYCARE_OY + MATSMOKE_PREG + MAT_ASTHMA_EVER + DELIVERYMODE + OTHERLIVSIBS_BIO + MAT_EDUCYEARS + INSURANCE_CHILD + MAT_MARITAL_STATUS"
+cw <- weightit(as.formula(formula),
+               data = df_sing_imp,
+               method = "cbps",
+               over = FALSE)
+love.plot(cw,
+          binary = "std",
+          var.order = "un",
+          stats = "corr",
+          abs = TRUE,
+          threshholds = c(0.1, 0.05)) +
+  theme(legend.position = "top")
+
+fit <- glm(vycurrentasthma_dev~rsv_pcr_age + I(rsv_pcr_age^2),
+           data = df_sing_imp,
+           weights = cw$weights,
+           family=quasibinomial())
+marg <- marg(fit, var_interest="rsv_pcr_age", at=list(rsv_pcr_age = seq(30,300,10)))
+marg <- bind_rows(marg)
+colnames(marg) <- c("label", "margin", "se", "z", "pvalue", "lower", "upper")
+
+marg <- marg %>% 
+  mutate(age = seq(30,300,10),
+         margin = 100*margin,
+         upper = 100*upper,
+         lower = 100*lower,
+         group = "overall")
+
+ggplot(marg, aes(x=age)) + 
+  geom_line(aes(y=margin)) + 
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.5, linetype=2) +
+  theme(legend.title = element_blank(), panel.grid.minor=element_blank()) +
+  labs(x = 'Age at first RSV PCR positive (days)',
+       y = 'Probability of 5-year current asthma',
+       title = "Imputed model (single imputation)") +
+  theme_classic() +
+  theme(
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 8),
+        text = element_text(family = 'Helvetica'),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank()
+    ) 
+```
+
